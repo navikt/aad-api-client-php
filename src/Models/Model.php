@@ -19,6 +19,6 @@ abstract class Model {
      * @throws InvalidArgumentException
      */
     public static function fromApiResponse(Response $response) : self {
-        return self::fromArray(json_decode($response->getBody()->getContents(), true));
+        return static::fromArray(json_decode($response->getBody()->getContents(), true));
     }
 }
