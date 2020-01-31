@@ -3,7 +3,7 @@ namespace NAVIT\AzureAd\Models;
 
 use NAVIT\AzureAd\Exceptions\InvalidArgumentException;
 
-class User {
+class User extends Model {
     private $id;
     private $displayName;
     private $mail;
