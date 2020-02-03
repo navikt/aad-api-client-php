@@ -3,6 +3,8 @@ namespace NAVIT\AzureAd;
 
 use GuzzleHttp\Client as HttpClient;
 use GuzzleHttp\Exception\ClientException;
+use InvalidArgumentException;
+use RuntimeException;
 
 class ApiClient {
     /**
@@ -91,7 +93,7 @@ class ApiClient {
      * @param string $description The description of the group
      * @param string[] $owners List of users to be added as owners
      * @param string[] $members List of users to be added as members
-     * @throws Exceptions\InvalidArgumentException
+     * @throws InvalidArgumentException
      * @return Models\Group
      */
     public function createGroup(string $displayName, string $description, array $owners = [], array $members = []) : Models\Group {
@@ -114,7 +116,7 @@ class ApiClient {
                 ]),
             ]);
         } catch (ClientException $e) {
-            throw new Exceptions\InvalidArgumentException('Unable to create group', $e->getCode(), $e);
+            throw new InvalidArgumentException('Unable to create group', $e->getCode(), $e);
         }
 
         return Models\Group::fromApiResponse($response);
@@ -160,7 +162,7 @@ class ApiClient {
                 ],
             ]);
         } catch(ClientException $e) {
-            throw new Exceptions\InvalidArgumentException('Unable to add group to enterprise application', $e->getCode(), $e);
+            throw new InvalidArgumentException('Unable to add group to enterprise application', $e->getCode(), $e);
         }
     }
 
@@ -190,7 +192,7 @@ class ApiClient {
         return array_filter(array_map(function(array $member) : ?Models\GroupMember {
             try {
                 return Models\GroupMember::fromArray($member);
-            } catch (Exceptions\InvalidArgumentException $e) {
+            } catch (InvalidArgumentException $e) {
                 return null;
             }
         }, $this->getPaginatedData(sprintf('groups/%s/members', $groupId), ['id', 'displayName', 'mail'])));
@@ -206,7 +208,7 @@ class ApiClient {
         return array_filter(array_map(function(array $member) : ?Models\GroupOwner {
             try {
                 return Models\GroupOwner::fromArray($member);
-            } catch (Exceptions\InvalidArgumentException $e) {
+            } catch (InvalidArgumentException $e) {
                 return null;
             }
         }, $this->getPaginatedData(sprintf('groups/%s/owners', $groupId), ['id', 'displayName', 'mail'])));
@@ -217,7 +219,7 @@ class ApiClient {
      *
      * @param string $url The URL to fetch
      * @param array $fields Fields to fetch
-     * @throws Exceptions\RuntimeException
+     * @throws RuntimeException
      * @return array
      */
     private function getPaginatedData(string $url, array $fields = []) : array {
@@ -232,7 +234,7 @@ class ApiClient {
             try {
                 $response = $this->httpClient->get($url, ['query' => $query]);
             } catch (ClientException $e) {
-                throw new Exceptions\RuntimeException('Unable to fetch paginated data', $e->getCode(), $e);
+                throw new RuntimeException('Unable to fetch paginated data', $e->getCode(), $e);
             }
 
             $body = json_decode($response->getBody()->getContents(), true);
