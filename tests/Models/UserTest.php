@@ -1,8 +1,8 @@
 <?php declare(strict_types=1);
 namespace NAVIT\AzureAd\Models;
 
-use NAVIT\AzureAd\Exceptions\InvalidArgumentException;
 use PHPUnit\Framework\TestCase;
+use InvalidArgumentException;
 
 /**
  * @coversDefaultClass NAVIT\AzureAd\Models\User

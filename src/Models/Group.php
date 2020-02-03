@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 namespace NAVIT\AzureAd\Models;
 
-use NAVIT\AzureAd\Exceptions\InvalidArgumentException;
+use InvalidArgumentException;
 
 class Group extends Model {
     private $id;
