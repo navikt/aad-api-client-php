@@ -28,3 +28,6 @@ jobs:
 
       - name: Run test suite
         run: composer run test
+
+      - name: Run static code analysis
+        run: composer run sa
