@@ -201,27 +201,27 @@ class ApiClientTest extends TestCase {
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [
-                new Response(200, [], json_encode([
+                new Response(200, [], (string) json_encode([
                     '@odata.context' => 'context-url',
                     '@odata.nextLink' => 'next-link',
                     'value' => [['principalId' => 'first-id', 'principalType' => 'Group']],
                 ])),
-                new Response(200, [], json_encode([
+                new Response(200, [], (string) json_encode([
                     '@odata.context' => 'context-url',
                     '@odata.nextLink' => 'next-link',
                     'value' => [['principalId' => 'second-id', 'principalType' => 'Group']],
                 ])),
-                new Response(200, [], json_encode([
+                new Response(200, [], (string) json_encode([
                     '@odata.context' => 'context-url',
                     'value' => [['principalId' => 'third-id', 'principalType' => 'User']],
                 ])),
-                new Response(200, [], json_encode([
+                new Response(200, [], (string) json_encode([
                     'id'          => 'first-id',
                     'displayName' => 'first-group',
                     'description' => 'first description',
                     'mail'        => 'first@nav.no',
                 ])),
-                new Response(200, [], json_encode([
+                new Response(200, [], (string) json_encode([
                     'id'          => 'second-id',
                     'displayName' => 'second-group',
                     'description' => 'second description',
@@ -283,12 +283,12 @@ class ApiClientTest extends TestCase {
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [
-                new Response(200, [], json_encode([
+                new Response(200, [], (string) json_encode([
                     '@odata.context' => 'context-url',
                     '@odata.nextLink' => 'next-link',
                     'value' => [['id' => 'first-id', 'displayName' => 'Name 1', 'mail' => 'mail1@nav.no']],
                 ])),
-                new Response(200, [], json_encode([
+                new Response(200, [], (string) json_encode([
                     '@odata.context' => 'context-url',
                     'value' => [
                         ['id' => 'second-id', 'displayName' => 'Name 2', 'mail' => 'mail2@nav.no'],
@@ -317,12 +317,12 @@ class ApiClientTest extends TestCase {
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [
-                new Response(200, [], json_encode([
+                new Response(200, [], (string) json_encode([
                     '@odata.context' => 'context-url',
                     '@odata.nextLink' => 'next-link',
                     'value' => [['id' => 'first-id', 'displayName' => 'Name 1', 'mail' => 'mail1@nav.no']],
                 ])),
-                new Response(200, [], json_encode([
+                new Response(200, [], (string) json_encode([
                     '@odata.context' => 'context-url',
                     'value' => [
                         ['id' => 'second-id', 'displayName' => 'Name 2', 'mail' => 'mail2@nav.no'],
