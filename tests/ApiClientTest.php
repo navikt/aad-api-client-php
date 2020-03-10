@@ -339,4 +339,38 @@ class ApiClientTest extends TestCase {
         $this->assertSame('groups/group-id/owners?%24select=id%2CdisplayName%2Cmail&%24top=100', (string) $clientHistory[0]['request']->getUri());
         $this->assertSame('next-link', (string) $clientHistory[1]['request']->getUri());
     }
+
+    /**
+     * @covers ::getUserById
+     */
+    public function testCanGetUserById() : void {
+        $authClient = $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')]
+        );
+        $clientHistory = [];
+        $httpClient = $this->getMockClient(
+            [new Response(200, [], '{"id": "some-id", "displayName": "Bar, Foo", "mail": "foobar@nav.no"}')],
+            $clientHistory
+        );
+
+        $aadUser = (new ApiClient('id', 'secret', $authClient, $httpClient))->getUserById('some-id');
+
+        $this->assertCount(1, $clientHistory, 'Expected one request');
+        $this->assertInstanceOf(Models\User::class, $aadUser);
+        $this->assertStringEndsWith('users/some-id', (string) $clientHistory[0]['request']->getUri());
+    }
+
+    /**
+     * @covers ::getUserById
+     */
+    public function testReturnsNullWhenUserByIdRequestFails() : void {
+        $authClient = $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')]
+        );
+        $httpClient = $this->getMockClient(
+            [new Response(404)]
+        );
+
+        $this->assertNull((new ApiClient('id', 'secret', $authClient, $httpClient))->getUserById('some-id'));
+    }
 }

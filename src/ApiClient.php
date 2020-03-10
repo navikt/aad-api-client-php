@@ -245,4 +245,20 @@ class ApiClient {
 
         return $entries;
     }
+
+    /**
+     * Get a user by ID
+     *
+     * @param string $userId
+     * @return ?Models\User
+     */
+    public function getUserById(string $userId) : ?Models\User {
+        try {
+            $response = $this->httpClient->get(sprintf('users/%s', $userId));
+        } catch (ClientException $e) {
+            return null;
+        }
+
+        return Models\User::fromApiResponse($response);
+    }
 }
