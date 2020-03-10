@@ -1,7 +1,7 @@
 <?php declare(strict_types=1);
 namespace NAVIT\AzureAd\Models;
 
-use GuzzleHttp\Psr7\Response;
+use Psr\Http\Message\ResponseInterface;
 use InvalidArgumentException;
 
 abstract class Model {
@@ -18,7 +18,7 @@ abstract class Model {
      *
      * @throws InvalidArgumentException
      */
-    public static function fromApiResponse(Response $response) : self {
+    public static function fromApiResponse(ResponseInterface $response) : self {
         return static::fromArray(json_decode($response->getBody()->getContents(), true));
     }
 }

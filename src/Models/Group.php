@@ -4,12 +4,27 @@ namespace NAVIT\AzureAd\Models;
 use InvalidArgumentException;
 
 class Group extends Model {
+    /**
+     * @var string
+     */
     private $id;
+
+    /**
+     * @var string
+     */
     private $displayName;
+
+    /**
+     * @var string
+     */
     private $description;
+
+    /**
+     * @var string
+     */
     private $mail;
 
-    public function __construct(string $id, string $displayName, string $description, string $mail) {
+    final public function __construct(string $id, string $displayName, string $description, string $mail) {
         $this->id          = $id;
         $this->displayName = $displayName;
         $this->description = $description;

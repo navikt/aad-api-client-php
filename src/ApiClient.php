@@ -59,6 +59,7 @@ class ApiClient {
             return null;
         }
 
+        /** @var Models\Group */
         return Models\Group::fromApiResponse($response);
     }
 
@@ -119,6 +120,7 @@ class ApiClient {
             throw new InvalidArgumentException('Unable to create group', $e->getCode(), $e);
         }
 
+        /** @var Models\Group */
         return Models\Group::fromApiResponse($response);
     }
 
@@ -191,6 +193,7 @@ class ApiClient {
     public function getGroupMembers(string $groupId) : array {
         return array_filter(array_map(function(array $member) : ?Models\GroupMember {
             try {
+                /** @var ?Models\GroupMember */
                 return Models\GroupMember::fromArray($member);
             } catch (InvalidArgumentException $e) {
                 return null;
@@ -202,11 +205,12 @@ class ApiClient {
      * Get all owners of a group
      *
      * @param string $groupId The group ID
-     * @return Models\GroupOwnerr[] Returns an array of users
+     * @return Models\GroupOwner[] Returns an array of users
      */
     public function getGroupOwners(string $groupId) : array {
         return array_filter(array_map(function(array $member) : ?Models\GroupOwner {
             try {
+                /** @var ?Models\GroupOwner */
                 return Models\GroupOwner::fromArray($member);
             } catch (InvalidArgumentException $e) {
                 return null;
@@ -259,6 +263,7 @@ class ApiClient {
             return null;
         }
 
+        /** @var Models\User */
         return Models\User::fromApiResponse($response);
     }
 }
