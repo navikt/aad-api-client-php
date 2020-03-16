@@ -88,6 +88,30 @@ class ApiClient {
     }
 
     /**
+     * Get a group by mailNickname
+     *
+     * @param string $mailNickname
+     * @return Models\Group|null
+     */
+    public function getGroupByMailNickname(string $mailNickname) : ?Models\Group {
+        try {
+            $response = $this->httpClient->get('groups', [
+                'query' => [
+                    '$filter' => sprintf('mailNickname eq \'%s\'', $mailNickname),
+                ],
+            ]);
+        } catch (ClientException $e) {
+            return null;
+        }
+
+        $groups = json_decode($response->getBody()->getContents(), true);
+
+        return !empty($groups['value'])
+            ? Models\Group::fromArray($groups['value'][0])
+            : null;
+    }
+
+    /**
      * Create a group
      *
      * @param string $displayName The name of the group

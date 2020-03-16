@@ -14,7 +14,7 @@ class GroupTest extends TestCase {
                 'some-id',
                 'some name',
                 'some description',
-                'mail@nav.no'
+                'mail'
             ],
         ];
     }
@@ -24,21 +24,21 @@ class GroupTest extends TestCase {
      * @covers ::getId
      * @covers ::getDisplayName
      * @covers ::getDescription
-     * @covers ::getMail
+     * @covers ::getMailNickname
      * @covers ::__construct
      * @dataProvider getCreationData
      */
-    public function testCanCreateFromArray(string $id, string $displayName, string $description, string $mail) : void {
+    public function testCanCreateFromArray(string $id, string $displayName, string $description, string $mailNickname) : void {
         $team = Group::fromArray([
-            'id'          => $id,
-            'displayName' => $displayName,
-            'description' => $description,
-            'mail'        => $mail,
+            'id'           => $id,
+            'displayName'  => $displayName,
+            'description'  => $description,
+            'mailNickname' => $mailNickname,
         ]);
         $this->assertSame($id, $team->getId());
         $this->assertSame($displayName, $team->getDisplayName());
         $this->assertSame($description, $team->getDescription());
-        $this->assertSame($mail, $team->getMail());
+        $this->assertSame($mailNickname, $team->getMailNickname());
     }
 
     public function getInvalidData() : array {

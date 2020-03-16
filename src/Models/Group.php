@@ -22,13 +22,13 @@ class Group extends Model {
     /**
      * @var string
      */
-    private $mail;
+    private $mailNickname;
 
-    final public function __construct(string $id, string $displayName, string $description, string $mail) {
-        $this->id          = $id;
-        $this->displayName = $displayName;
-        $this->description = $description;
-        $this->mail        = $mail;
+    final public function __construct(string $id, string $displayName, string $description, string $mailNickname) {
+        $this->id           = $id;
+        $this->displayName  = $displayName;
+        $this->description  = $description;
+        $this->mailNickname = $mailNickname;
     }
 
     public function getId() : string {
@@ -43,12 +43,12 @@ class Group extends Model {
         return $this->description;
     }
 
-    public function getMail() : string {
-        return $this->mail;
+    public function getMailNickname() : string {
+        return $this->mailNickname;
     }
 
     public static function fromArray(array $data) : self {
-        foreach (['id', 'displayName', 'description', 'mail'] as $required) {
+        foreach (['id', 'displayName', 'description', 'mailNickname'] as $required) {
             if (empty($data[$required])) {
                 throw new InvalidArgumentException(sprintf('Missing data element: %s', $required));
             }
@@ -58,7 +58,7 @@ class Group extends Model {
             $data['id'],
             $data['displayName'],
             $data['description'],
-            $data['mail']
+            $data['mailNickname']
         );
     }
 }
