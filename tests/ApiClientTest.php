@@ -49,7 +49,7 @@ class ApiClientTest extends TestCase {
         );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
-            [new Response(200, [], '{"id": "some-id", "displayName": "some-display-name", "description": "some description", "mail": "mail@nav.no"}')],
+            [new Response(200, [], '{"id": "some-id", "displayName": "some-display-name", "description": "some description", "mailNickname": "mail"}')],
             $clientHistory
         );
 
@@ -83,7 +83,7 @@ class ApiClientTest extends TestCase {
         );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
-            [new Response(200, [], '{"value": [{"id": "some-id", "displayName": "some-display-name", "description": "some description", "mail": "mail@nav.no"}]}')],
+            [new Response(200, [], '{"value": [{"id": "some-id", "displayName": "some-display-name", "description": "some description", "mailNickname": "mail"}]}')],
             $clientHistory
         );
 
@@ -127,6 +127,58 @@ class ApiClientTest extends TestCase {
     }
 
     /**
+     * @covers ::getGroupByMailNickname
+     */
+    public function testCanGetGroupByMailNickname() : void {
+        $authClient = $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')]
+        );
+        $clientHistory = [];
+        $httpClient = $this->getMockClient(
+            [new Response(200, [], '{"value": [{"id": "some-id", "displayName": "some-display-name", "description": "some description", "mailNickname": "mail"}]}')],
+            $clientHistory
+        );
+
+        $aadGroup = (new ApiClient('id', 'secret', $authClient, $httpClient))->getGroupByMailNickname('mail');
+
+        $this->assertCount(1, $clientHistory, 'Expected one request');
+        $this->assertInstanceOf(Models\Group::class, $aadGroup);
+        $this->assertStringContainsString('filter=mailNickname%20eq%20%27mail%27', $clientHistory[0]['request']->getUri()->getQuery());
+    }
+
+    /**
+     * @covers ::getGroupByMailNickname
+     */
+    public function testReturnsNullWhenGroupByMailNicknameRequestFails() : void {
+        $authClient = $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')]
+        );
+        $httpClient = $this->getMockClient(
+            [new Response(404)]
+        );
+
+        $this->assertNull((new ApiClient('id', 'secret', $authClient, $httpClient))->getGroupByMailNickname('some mail nickname'));
+    }
+
+    /**
+     * @covers ::getGroupByMailNickname
+     */
+    public function testReturnsNullWhenGroupWithNailNicknameDoesNotExist() : void {
+        $authClient = $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')]
+        );
+        $clientHistory = [];
+        $httpClient = $this->getMockClient(
+            [new Response(200, [], '{"value": []}')],
+            $clientHistory
+        );
+
+        $this->assertNull((new ApiClient('id', 'secret', $authClient, $httpClient))->getGroupByMailNickname('some-mailnickname'));
+        $this->assertCount(1, $clientHistory, 'Expected one request');
+        $this->assertStringContainsString('filter=mailNickname%20eq%20%27some-mailnickname%27', $clientHistory[0]['request']->getUri()->getQuery());
+    }
+
+    /**
      * @covers ::createGroup
      */
     public function testCanCreateGroup() : void {
@@ -135,7 +187,7 @@ class ApiClientTest extends TestCase {
         );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
-            [new Response(201, [], '{"id": "some-id", "displayName": "some-display-name", "description": "some description", "mail": "mail@nav.no"}')],
+            [new Response(201, [], '{"id": "some-id", "displayName": "some-display-name", "description": "some description", "mailNickname": "mail"}')],
             $clientHistory
         );
 
@@ -216,16 +268,16 @@ class ApiClientTest extends TestCase {
                     'value' => [['principalId' => 'third-id', 'principalType' => 'User']],
                 ])),
                 new Response(200, [], (string) json_encode([
-                    'id'          => 'first-id',
-                    'displayName' => 'first-group',
-                    'description' => 'first description',
-                    'mail'        => 'first@nav.no',
+                    'id'           => 'first-id',
+                    'displayName'  => 'first-group',
+                    'description'  => 'first description',
+                    'mailNickname' => 'first'
                 ])),
                 new Response(200, [], (string) json_encode([
-                    'id'          => 'second-id',
-                    'displayName' => 'second-group',
-                    'description' => 'second description',
-                    'mail'        => 'second@nav.no',
+                    'id'           => 'second-id',
+                    'displayName'  => 'second-group',
+                    'description'  => 'second description',
+                    'mailNickname' => 'second',
                 ])),
             ],
             $clientHistory
