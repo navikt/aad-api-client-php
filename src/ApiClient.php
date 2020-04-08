@@ -260,7 +260,7 @@ class ApiClient {
 
         while ($url) {
             try {
-                $response = $this->httpClient->get($url, ['query' => $query]);
+                $response = $this->httpClient->get($url, array_filter(['query' => $query]));
             } catch (ClientException $e) {
                 throw new RuntimeException('Unable to fetch paginated data', $e->getCode(), $e);
             }

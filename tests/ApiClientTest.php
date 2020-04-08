@@ -255,12 +255,12 @@ class ApiClientTest extends TestCase {
             [
                 new Response(200, [], (string) json_encode([
                     '@odata.context' => 'context-url',
-                    '@odata.nextLink' => 'next-link',
+                    '@odata.nextLink' => 'next-link?foo=bar&token=123',
                     'value' => [['principalId' => 'first-id', 'principalType' => 'Group']],
                 ])),
                 new Response(200, [], (string) json_encode([
                     '@odata.context' => 'context-url',
-                    '@odata.nextLink' => 'next-link',
+                    '@odata.nextLink' => 'next-link?foo=bar&token=456',
                     'value' => [['principalId' => 'second-id', 'principalType' => 'Group']],
                 ])),
                 new Response(200, [], (string) json_encode([
@@ -287,8 +287,8 @@ class ApiClientTest extends TestCase {
         $this->assertCount(2, $groups);
         $this->assertCount(5, $clientHistory);
         $this->assertSame('servicePrincipals/app-object-id/appRoleAssignedTo?%24select=principalId%2CprincipalType&%24top=100', (string) $clientHistory[0]['request']->getUri());
-        $this->assertSame('next-link', (string) $clientHistory[1]['request']->getUri());
-        $this->assertSame('next-link', (string) $clientHistory[2]['request']->getUri());
+        $this->assertSame('next-link?foo=bar&token=123', (string) $clientHistory[1]['request']->getUri());
+        $this->assertSame('next-link?foo=bar&token=456', (string) $clientHistory[2]['request']->getUri());
         $this->assertSame('groups/first-id', (string) $clientHistory[3]['request']->getUri());
         $this->assertSame('groups/second-id', (string) $clientHistory[4]['request']->getUri());
     }
