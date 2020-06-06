@@ -29,7 +29,7 @@ class ApiClientTest extends TestCase {
             $clientHistory
         );
 
-        new ApiClient($id = 'id', $secret = 'secret', $authClient);
+        new ApiClient($id = 'id', $secret = 'secret', 'nav.no', $authClient);
 
         $this->assertCount(1, $clientHistory, 'Missing request');
         $request = $clientHistory[0]['request'];
@@ -53,7 +53,7 @@ class ApiClientTest extends TestCase {
             $clientHistory
         );
 
-        $aadGroup = (new ApiClient('id', 'secret', $authClient, $httpClient))->getGroupById('some-id');
+        $aadGroup = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupById('some-id');
 
         $this->assertCount(1, $clientHistory, 'Expected one request');
         $this->assertInstanceOf(Models\Group::class, $aadGroup);
@@ -71,7 +71,7 @@ class ApiClientTest extends TestCase {
             [new Response(404)]
         );
 
-        $this->assertNull((new ApiClient('id', 'secret', $authClient, $httpClient))->getGroupById('some-id'));
+        $this->assertNull((new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupById('some-id'));
     }
 
     /**
@@ -87,7 +87,7 @@ class ApiClientTest extends TestCase {
             $clientHistory
         );
 
-        $aadGroup = (new ApiClient('id', 'secret', $authClient, $httpClient))->getGroupByDisplayName('some-display-name');
+        $aadGroup = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupByDisplayName('some-display-name');
 
         $this->assertCount(1, $clientHistory, 'Expected one request');
         $this->assertInstanceOf(Models\Group::class, $aadGroup);
@@ -105,7 +105,7 @@ class ApiClientTest extends TestCase {
             [new Response(404)]
         );
 
-        $this->assertNull((new ApiClient('id', 'secret', $authClient, $httpClient))->getGroupByDisplayName('some display name'));
+        $this->assertNull((new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupByDisplayName('some display name'));
     }
 
     /**
@@ -121,7 +121,7 @@ class ApiClientTest extends TestCase {
             $clientHistory
         );
 
-        $this->assertNull((new ApiClient('id', 'secret', $authClient, $httpClient))->getGroupByDisplayName('some-display-name'));
+        $this->assertNull((new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupByDisplayName('some-display-name'));
         $this->assertCount(1, $clientHistory, 'Expected one request');
         $this->assertStringContainsString('filter=displayName%20eq%20%27some-display-name%27', $clientHistory[0]['request']->getUri()->getQuery());
     }
@@ -139,7 +139,7 @@ class ApiClientTest extends TestCase {
             $clientHistory
         );
 
-        $aadGroup = (new ApiClient('id', 'secret', $authClient, $httpClient))->getGroupByMailNickname('mail');
+        $aadGroup = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupByMailNickname('mail');
 
         $this->assertCount(1, $clientHistory, 'Expected one request');
         $this->assertInstanceOf(Models\Group::class, $aadGroup);
@@ -157,7 +157,7 @@ class ApiClientTest extends TestCase {
             [new Response(404)]
         );
 
-        $this->assertNull((new ApiClient('id', 'secret', $authClient, $httpClient))->getGroupByMailNickname('some mail nickname'));
+        $this->assertNull((new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupByMailNickname('some mail nickname'));
     }
 
     /**
@@ -173,7 +173,7 @@ class ApiClientTest extends TestCase {
             $clientHistory
         );
 
-        $this->assertNull((new ApiClient('id', 'secret', $authClient, $httpClient))->getGroupByMailNickname('some-mailnickname'));
+        $this->assertNull((new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupByMailNickname('some-mailnickname'));
         $this->assertCount(1, $clientHistory, 'Expected one request');
         $this->assertStringContainsString('filter=mailNickname%20eq%20%27some-mailnickname%27', $clientHistory[0]['request']->getUri()->getQuery());
     }
@@ -191,7 +191,7 @@ class ApiClientTest extends TestCase {
             $clientHistory
         );
 
-        $aadGroup = (new ApiClient('id', 'secret', $authClient, $httpClient))->createGroup(
+        $aadGroup = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->createGroup(
             'group name',
             'group description',
             ['Owner1@nav.no']
@@ -228,7 +228,7 @@ class ApiClientTest extends TestCase {
             $clientHistory
         );
 
-        (new ApiClient('id', 'secret', $authClient, $httpClient))->addGroupToEnterpriseApp('group-id', 'app-object-id', 'app-role-id');
+        (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->addGroupToEnterpriseApp('group-id', 'app-object-id', 'app-role-id');
 
         $this->assertCount(1, $clientHistory, 'Expected one request');
 
@@ -283,7 +283,7 @@ class ApiClientTest extends TestCase {
             $clientHistory
         );
 
-        $groups = (new ApiClient('id', 'secret', $authClient, $httpClient))->getEnterpriseAppGroups('app-object-id');
+        $groups = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getEnterpriseAppGroups('app-object-id');
         $this->assertCount(2, $groups);
         $this->assertCount(5, $clientHistory);
         $this->assertSame('servicePrincipals/app-object-id/appRoleAssignedTo?%24select=principalId%2CprincipalType&%24top=100', (string) $clientHistory[0]['request']->getUri());
@@ -303,7 +303,7 @@ class ApiClientTest extends TestCase {
         $clientHistory = [];
         $httpClient = $this->getMockClient([new Response(200)], $clientHistory);
 
-        $this->assertTrue((new ApiClient('id', 'secret', $authClient, $httpClient))->setGroupDescription('group-id', 'description'));
+        $this->assertTrue((new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->setGroupDescription('group-id', 'description'));
         $this->assertCount(1, $clientHistory);
         $this->assertSame('groups/group-id', (string) $clientHistory[0]['request']->getUri());
         $this->assertSame('{"description":"description"}', (string) $clientHistory[0]['request']->getBody());
@@ -319,7 +319,7 @@ class ApiClientTest extends TestCase {
         $clientHistory = [];
         $httpClient = $this->getMockClient([new Response(404)], $clientHistory);
 
-        $this->assertFalse((new ApiClient('id', 'secret', $authClient, $httpClient))->setGroupDescription('group-id', 'description'));
+        $this->assertFalse((new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->setGroupDescription('group-id', 'description'));
         $this->assertCount(1, $clientHistory);
         $this->assertSame('groups/group-id', (string) $clientHistory[0]['request']->getUri());
     }
@@ -351,7 +351,7 @@ class ApiClientTest extends TestCase {
             $clientHistory
         );
 
-        $members = (new ApiClient('id', 'secret', $authClient, $httpClient))->getGroupMembers('group-id');
+        $members = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupMembers('group-id');
         $this->assertCount(2, $members);
         $this->assertCount(2, $clientHistory);
         $this->assertSame('groups/group-id/members?%24select=id%2CdisplayName%2Cmail&%24top=100', (string) $clientHistory[0]['request']->getUri());
@@ -385,7 +385,7 @@ class ApiClientTest extends TestCase {
             $clientHistory
         );
 
-        $owners = (new ApiClient('id', 'secret', $authClient, $httpClient))->getGroupOwners('group-id');
+        $owners = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupOwners('group-id');
         $this->assertCount(2, $owners);
         $this->assertCount(2, $clientHistory);
         $this->assertSame('groups/group-id/owners?%24select=id%2CdisplayName%2Cmail&%24top=100', (string) $clientHistory[0]['request']->getUri());
@@ -405,7 +405,7 @@ class ApiClientTest extends TestCase {
             $clientHistory
         );
 
-        $aadUser = (new ApiClient('id', 'secret', $authClient, $httpClient))->getUserById('some-id');
+        $aadUser = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getUserById('some-id');
 
         $this->assertCount(1, $clientHistory, 'Expected one request');
         $this->assertInstanceOf(Models\User::class, $aadUser);
@@ -423,6 +423,6 @@ class ApiClientTest extends TestCase {
             [new Response(404)]
         );
 
-        $this->assertNull((new ApiClient('id', 'secret', $authClient, $httpClient))->getUserById('some-id'));
+        $this->assertNull((new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getUserById('some-id'));
     }
 }

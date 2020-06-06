@@ -22,11 +22,12 @@ class ApiClient {
      *
      * @param string $clientId Client ID
      * @param string $clientSecret Client secret
+     * @param string $tenant Tenant name
      * @param HttpClient $authClient Pre-configured HTTP client for auth
      * @param HttpClient $httpClient Pre-configured HTTP client for the API calls
      */
-    public function __construct(string $clientId, string $clientSecret, HttpClient $authClient = null, HttpClient $httpClient = null) {
-        $response = ($authClient ?: new HttpClient())->post('https://login.microsoftonline.com/nav.no/oauth2/v2.0/token', [
+    public function __construct(string $clientId, string $clientSecret, string $tenant, HttpClient $authClient = null, HttpClient $httpClient = null) {
+        $response = ($authClient ?: new HttpClient())->post(sprintf('https://login.microsoftonline.com/%s/oauth2/v2.0/token', $tenant), [
             'form_params' => [
                 'client_id'     => $clientId,
                 'client_secret' => $clientSecret,
