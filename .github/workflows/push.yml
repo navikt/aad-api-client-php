@@ -7,6 +7,12 @@ jobs:
     steps:
       - uses: actions/checkout@v2
 
+      - name: PHP info
+        run: |
+          php -v
+          php -i
+          php -m
+
       - name: Validate composer files
         run: composer validate
 
