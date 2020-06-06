@@ -119,7 +119,7 @@ class ApiClient {
      * @param string $description The description of the group
      * @param string[] $owners List of users to be added as owners
      * @param string[] $members List of users to be added as members
-     * @throws InvalidArgumentException
+     * @throws RuntimeException
      * @return Models\Group
      */
     public function createGroup(string $displayName, string $description, array $owners = [], array $members = []) : Models\Group {
@@ -142,7 +142,7 @@ class ApiClient {
                 ]),
             ]);
         } catch (ClientException $e) {
-            throw new InvalidArgumentException('Unable to create group', $e->getCode(), $e);
+            throw new RuntimeException('Unable to create group', $e->getCode(), $e);
         }
 
         /** @var Models\Group */
@@ -176,7 +176,7 @@ class ApiClient {
      * @param string $groupId The ID of the group to add
      * @param string $applicationObjectId The object ID of the application to add the group to
      * @param string $applicationRoleId The role ID the group will receive
-     * @throws InvalidArgumentException
+     * @throws RuntimeException
      * @return void
      */
     public function addGroupToEnterpriseApp(string $groupId, string $applicationObjectId, string $applicationRoleId) : void {
@@ -189,7 +189,7 @@ class ApiClient {
                 ],
             ]);
         } catch(ClientException $e) {
-            throw new InvalidArgumentException('Unable to add group to enterprise application', $e->getCode(), $e);
+            throw new RuntimeException('Unable to add group to enterprise application', $e->getCode(), $e);
         }
     }
 
@@ -218,12 +218,28 @@ class ApiClient {
     public function getGroupMembers(string $groupId) : array {
         return array_filter(array_map(function(array $member) : ?Models\GroupMember {
             try {
-                /** @var ?Models\GroupMember */
+                /** @var Models\GroupMember */
                 return Models\GroupMember::fromArray($member);
             } catch (InvalidArgumentException $e) {
                 return null;
             }
         }, $this->getPaginatedData(sprintf('groups/%s/members', $groupId), ['id', 'displayName', 'mail'])));
+    }
+
+    /**
+     * Get all groups that a user is a member of
+     *
+     * @param string $userId ID of the user
+     * @return Models\Group[]
+     */
+    public function getUserGroups(string $userId) : array {
+        return array_filter(array_map(function(array $group) : ?Models\Group {
+            try {
+                return Models\Group::fromArray($group);
+            } catch (InvalidArgumentException $e) {
+                return null;
+            }
+        }, $this->getPaginatedData(sprintf('users/%s/memberOf', $userId), ['id', 'displayName', 'description', 'mailNickname'])));
     }
 
     /**
@@ -235,12 +251,29 @@ class ApiClient {
     public function getGroupOwners(string $groupId) : array {
         return array_filter(array_map(function(array $member) : ?Models\GroupOwner {
             try {
-                /** @var ?Models\GroupOwner */
+                /** @var Models\GroupOwner */
                 return Models\GroupOwner::fromArray($member);
             } catch (InvalidArgumentException $e) {
                 return null;
             }
         }, $this->getPaginatedData(sprintf('groups/%s/owners', $groupId), ['id', 'displayName', 'mail'])));
+    }
+
+    /**
+     * Get a user by ID
+     *
+     * @param string $userId
+     * @return ?Models\User
+     */
+    public function getUserById(string $userId) : ?Models\User {
+        try {
+            $response = $this->httpClient->get(sprintf('users/%s', $userId));
+        } catch (ClientException $e) {
+            return null;
+        }
+
+        /** @var Models\User */
+        return Models\User::fromApiResponse($response);
     }
 
     /**
@@ -273,22 +306,5 @@ class ApiClient {
         }
 
         return $entries;
-    }
-
-    /**
-     * Get a user by ID
-     *
-     * @param string $userId
-     * @return ?Models\User
-     */
-    public function getUserById(string $userId) : ?Models\User {
-        try {
-            $response = $this->httpClient->get(sprintf('users/%s', $userId));
-        } catch (ClientException $e) {
-            return null;
-        }
-
-        /** @var Models\User */
-        return Models\User::fromApiResponse($response);
     }
 }

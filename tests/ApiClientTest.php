@@ -7,6 +7,7 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Middleware;
+use RuntimeException;
 
 /**
  * @coversDefaultClass NAVIT\AzureAd\ApiClient
@@ -216,6 +217,22 @@ class ApiClientTest extends TestCase {
     }
 
     /**
+     * @covers ::createGroup
+     */
+    public function testThrowsExceptionWhenFailingToCreateGroup() : void {
+        $authClient = $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')]
+        );
+        $httpClient = $this->getMockClient([new Response(400)]);
+        $this->expectExceptionObject(new RuntimeException('Unable to create group', 400));
+        (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->createGroup(
+            'group name',
+            'group description',
+            ['Owner1@nav.no']
+        );
+    }
+
+    /**
      * @covers ::addGroupToEnterpriseApp
      */
     public function testCanAddGroupToEnterpriseApp() : void {
@@ -240,6 +257,18 @@ class ApiClientTest extends TestCase {
             'appRoleId' => 'app-role-id',
             'resourceId' => 'app-object-id'
         ], json_decode($request->getBody()->getContents(), true), 'Incorrect request body');
+    }
+
+    /**
+     * @covers ::addGroupToEnterpriseApp
+     */
+    public function testThrowsExceptionWhenFailingToAddGroupToEnterpriseApplication() : void {
+        $authClient = $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')]
+        );
+        $httpClient = $this->getMockClient([new Response(400)]);
+        $this->expectExceptionObject(new RuntimeException('Unable to add group to enterprise application', 400));
+        (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->addGroupToEnterpriseApp('group-id', 'app-object-id', 'app-role-id');
     }
 
     /**
@@ -424,5 +453,53 @@ class ApiClientTest extends TestCase {
         );
 
         $this->assertNull((new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getUserById('some-id'));
+    }
+
+    /**
+     * @covers ::getUserGroups
+     * @covers ::getPaginatedData
+     */
+    public function testCanGetUserGroups() : void {
+        $authClient = $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')]
+        );
+        $clientHistory = [];
+        $httpClient = $this->getMockClient(
+            [
+                new Response(200, [], (string) json_encode([
+                    '@odata.context' => 'context-url',
+                    '@odata.nextLink' => 'next-link',
+                    'value' => [
+                        ['id' => 'id1', 'displayName'  => 'name1', 'description'  => 'desc1', 'mailNickname' => 'mail1'],
+                    ],
+                ])),
+                new Response(200, [], (string) json_encode([
+                    '@odata.context' => 'context-url',
+                    'value' => [
+                        ['id' => 'id2', 'displayName'  => 'name2', 'description'  => 'desc2', 'mailNickname' => 'mail2'],
+                        ['id' => 'id3', 'displayName'  => 'name3', 'description'  => 'desc3'], // incomplete, will trigger error internally
+                    ],
+                ])),
+            ],
+            $clientHistory
+        );
+
+        $groups = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getUserGroups('user-id');
+        $this->assertCount(2, $groups);
+        $this->assertCount(2, $clientHistory);
+        $this->assertSame('users/user-id/memberOf?%24select=id%2CdisplayName%2Cdescription%2CmailNickname&%24top=100', (string) $clientHistory[0]['request']->getUri());
+        $this->assertSame('next-link', (string) $clientHistory[1]['request']->getUri());
+    }
+
+    /**
+     * @covers ::getPaginatedData
+     */
+    public function testThrowsExceptionWhenUnableToFetchPaginatedData() : void {
+        $authClient = $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')]
+        );
+        $httpClient = $this->getMockClient([new Response(401)]);
+        $this->expectExceptionObject(new RuntimeException('Unable to fetch paginated data', 401));
+        (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getUserGroups('user-id');
     }
 }
