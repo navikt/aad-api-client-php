@@ -45,9 +45,9 @@ class User extends Model {
         }
 
         return new static(
-            $data['id'],
-            $data['displayName'],
-            $data['mail']
+            (string) $data['id'],
+            (string) $data['displayName'],
+            (string) $data['mail']
         );
     }
 }

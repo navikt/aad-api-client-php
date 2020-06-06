@@ -36,13 +36,14 @@ class ApiClient {
             ],
         ]);
 
+        /** @var array{access_token: string} */
         $response = json_decode((string) $response->getBody(), true);
 
         $this->httpClient = $httpClient ?: new HttpClient([
             'base_uri' => $this->baseUri,
             'headers'  => [
                 'Accept'        => 'application/json',
-                'Authorization' => sprintf('Bearer %s', $response['access_token']),
+                'Authorization' => sprintf('Bearer %s', (string) $response['access_token']),
             ],
         ]);
     }
@@ -81,6 +82,7 @@ class ApiClient {
             return null;
         }
 
+        /** @var array{value: array<int, array>} */
         $groups = json_decode($response->getBody()->getContents(), true);
 
         return !empty($groups['value'])
@@ -105,6 +107,7 @@ class ApiClient {
             return null;
         }
 
+        /** @var array{value: array<int, array>} */
         $groups = json_decode($response->getBody()->getContents(), true);
 
         return !empty($groups['value'])
@@ -142,7 +145,7 @@ class ApiClient {
                 ]),
             ]);
         } catch (ClientException $e) {
-            throw new RuntimeException('Unable to create group', $e->getCode(), $e);
+            throw new RuntimeException('Unable to create group', (int) $e->getCode(), $e);
         }
 
         /** @var Models\Group */
@@ -189,7 +192,7 @@ class ApiClient {
                 ],
             ]);
         } catch(ClientException $e) {
-            throw new RuntimeException('Unable to add group to enterprise application', $e->getCode(), $e);
+            throw new RuntimeException('Unable to add group to enterprise application', (int) $e->getCode(), $e);
         }
     }
 
@@ -203,9 +206,9 @@ class ApiClient {
         $url = sprintf('servicePrincipals/%s/appRoleAssignedTo', $applicationObjectId);
 
         return array_filter(array_map(function(array $group) : ?Models\Group {
-            return $this->getGroupById($group['principalId']);
+            return $this->getGroupById((string) $group['principalId']);
         }, array_filter($this->getPaginatedData($url, ['principalId', 'principalType']), function(array $group) : bool {
-            return 'group' === strtolower($group['principalType']);
+            return 'group' === strtolower((string) $group['principalType']);
         })));
     }
 
@@ -292,13 +295,14 @@ class ApiClient {
             '$top'    => 100
         ]);
 
-        while ($url) {
+        while (null !== $url) {
             try {
                 $response = $this->httpClient->get($url, array_filter(['query' => $query]));
             } catch (ClientException $e) {
-                throw new RuntimeException('Unable to fetch paginated data', $e->getCode(), $e);
+                throw new RuntimeException('Unable to fetch paginated data', (int) $e->getCode(), $e);
             }
 
+            /** @var array{value: array, "@odata.nextLink": ?string} */
             $body = json_decode($response->getBody()->getContents(), true);
             $entries = array_merge($entries, $body['value']);
             $url = $body['@odata.nextLink'] ?? null;

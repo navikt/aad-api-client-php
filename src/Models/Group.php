@@ -55,10 +55,10 @@ class Group extends Model {
         }
 
         return new static(
-            $data['id'],
-            $data['displayName'],
-            $data['description'],
-            $data['mailNickname']
+            (string) $data['id'],
+            (string) $data['displayName'],
+            (string) $data['description'],
+            (string) $data['mailNickname']
         );
     }
 }

@@ -20,7 +20,9 @@
         "phpunit/phpunit": "^8.5",
         "phpstan/phpstan": "^0.12.14",
         "phpstan/phpstan-phpunit": "^0.12.11",
-        "phpstan/extension-installer": "^1.0"
+        "phpstan/extension-installer": "^1.0",
+        "vimeo/psalm": "^3.11",
+        "psalm/plugin-phpunit": "^0.10.1"
     },
     "autoload": {
         "psr-4": {
@@ -36,7 +38,12 @@
         "lint": "for file in `git ls-files '*.php'`; do php -l $file; done",
         "test": "vendor/bin/phpunit",
         "test:coverage": "vendor/bin/phpunit --coverage-html build/coverage",
-        "sa": "vendor/bin/phpstan analyse src tests -l max --no-progress",
+        "phpstan": "vendor/bin/phpstan analyse src tests -l max --no-progress",
+        "psalm": "vendor/bin/psalm --no-progress",
+        "sa": [
+            "@phpstan",
+            "@psalm"
+        ],
         "ci": [
             "composer validate",
             "@lint",
