@@ -8,6 +8,9 @@ use InvalidArgumentException;
  * @coversDefaultClass NAVIT\AzureAd\Models\User
  */
 class UserTest extends TestCase {
+    /**
+     * @return array<string, array<string>>
+     */
     public function getCreationData() : array {
         return [
             'all elements present' => [
@@ -27,17 +30,19 @@ class UserTest extends TestCase {
      * @dataProvider getCreationData
      */
     public function testCanCreateFromArray(string $id, string $displayName, string $mail) : void {
-        $group = User::fromArray([
+        $user = User::fromArray([
             'id'          => $id,
             'displayName' => $displayName,
             'mail'        => $mail,
         ]);
-        $this->assertInstanceOf(User::class, $group);
-        $this->assertSame($id, $group->getId());
-        $this->assertSame($displayName, $group->getDisplayName());
-        $this->assertSame($mail, $group->getMail());
+        $this->assertSame($id, $user->getId());
+        $this->assertSame($displayName, $user->getDisplayName());
+        $this->assertSame($mail, $user->getMail());
     }
 
+    /**
+     * @return array<string, array{0: array, 1: string}>
+     */
     public function getInvalidData() : array {
         return [
             'missing id' => [

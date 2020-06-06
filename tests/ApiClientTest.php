@@ -7,12 +7,21 @@ use GuzzleHttp\Handler\MockHandler;
 use GuzzleHttp\HandlerStack;
 use GuzzleHttp\Psr7\Response;
 use GuzzleHttp\Middleware;
+use Psr\Http\Message\RequestInterface;
+use Psr\Http\Message\ResponseInterface;
 use RuntimeException;
 
 /**
  * @coversDefaultClass NAVIT\AzureAd\ApiClient
  */
 class ApiClientTest extends TestCase {
+    /**
+     * @param ResponseInterface[] $responses
+     * @param array $history
+     * @param-out array<int, array{response: ResponseInterface, request: RequestInterface}> $history
+     * @return HttpClient
+     * @psalm-suppress ReferenceConstraintViolation
+     */
     private function getMockClient(array $responses, array &$history = []) : HttpClient {
         $handler = HandlerStack::create(new MockHandler($responses));
         $handler->push(Middleware::history($history));
@@ -198,12 +207,21 @@ class ApiClientTest extends TestCase {
             ['Owner1@nav.no']
         );
 
-        $this->assertInstanceOf(Models\Group::class, $aadGroup);
         $this->assertCount(1, $clientHistory, 'Expected one request');
 
         $request = $clientHistory[0]['request'];
         $this->assertSame('POST', $request->getMethod());
 
+        /**
+         * @var array{
+         *     displayName: string,
+         *     description: string,
+         *     mailNickname: string,
+         *     "owners@odata.bind": array,
+         *     securityEnabled: bool,
+         *     mailEnabled: bool
+         * }
+         */
         $body = json_decode($request->getBody()->getContents(), true);
 
         $this->assertSame('group name', $body['displayName'], 'Group name not correct');

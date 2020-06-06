@@ -8,6 +8,9 @@ use InvalidArgumentException;
  * @coversDefaultClass NAVIT\AzureAd\Models\Group
  */
 class GroupTest extends TestCase {
+    /**
+     * @return array<string, array<string>>
+     */
     public function getCreationData() : array {
         return [
             'all elements present' => [
@@ -41,6 +44,9 @@ class GroupTest extends TestCase {
         $this->assertSame($mailNickname, $team->getMailNickname());
     }
 
+    /**
+     * @return array<string, array{0: array, 1: string}>
+     */
     public function getInvalidData() : array {
         return [
             'missing id' => [
