@@ -505,7 +505,7 @@ class ApiClientTest extends TestCase {
         $groups = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getUserGroups('user-id');
         $this->assertCount(2, $groups);
         $this->assertCount(2, $clientHistory);
-        $this->assertSame('users/user-id/memberOf?%24select=id%2CdisplayName%2Cdescription%2CmailNickname&%24top=100', (string) $clientHistory[0]['request']->getUri());
+        $this->assertSame('users/user-id/memberOf/microsoft.graph.group?%24select=id%2CdisplayName%2Cdescription%2CmailNickname&%24top=100', (string) $clientHistory[0]['request']->getUri());
         $this->assertSame('next-link', (string) $clientHistory[1]['request']->getUri());
     }
 

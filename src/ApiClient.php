@@ -242,7 +242,7 @@ class ApiClient {
             } catch (InvalidArgumentException $e) {
                 return null;
             }
-        }, $this->getPaginatedData(sprintf('users/%s/memberOf', $userId), ['id', 'displayName', 'description', 'mailNickname'])));
+        }, $this->getPaginatedData(sprintf('users/%s/memberOf/microsoft.graph.group', $userId), ['id', 'displayName', 'description', 'mailNickname'])));
     }
 
     /**
