@@ -9,14 +9,15 @@ use InvalidArgumentException;
  */
 class UserTest extends TestCase {
     /**
-     * @return array<string, array<string>>
+     * @return array<string, array{0: string, 1: string, 2: string, 3: bool}>
      */
     public function getCreationData() : array {
         return [
             'all elements present' => [
                 'some-id',
                 'some name',
-                'mail@nav.no'
+                'mail@nav.no',
+                true,
             ],
         ];
     }
@@ -26,18 +27,21 @@ class UserTest extends TestCase {
      * @covers ::getId
      * @covers ::getDisplayName
      * @covers ::getMail
+     * @covers ::getAccountEnabled
      * @covers ::__construct
      * @dataProvider getCreationData
      */
-    public function testCanCreateFromArray(string $id, string $displayName, string $mail) : void {
+    public function testCanCreateFromArray(string $id, string $displayName, string $mail, bool $accountEnabled) : void {
         $user = User::fromArray([
-            'id'          => $id,
-            'displayName' => $displayName,
-            'mail'        => $mail,
+            'id'             => $id,
+            'displayName'    => $displayName,
+            'mail'           => $mail,
+            'accountEnabled' => $accountEnabled,
         ]);
         $this->assertSame($id, $user->getId());
         $this->assertSame($displayName, $user->getDisplayName());
         $this->assertSame($mail, $user->getMail());
+        $this->assertSame($accountEnabled, $user->getAccountEnabled());
     }
 
     /**
