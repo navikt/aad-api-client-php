@@ -4,25 +4,23 @@ namespace NAVIT\AzureAd\Models;
 use InvalidArgumentException;
 
 class User extends Model {
-    /**
-     * @var string
-     */
+    /** @var string */
     private $id;
 
-    /**
-     * @var string
-     */
+    /** @var string */
     private $displayName;
 
-    /**
-     * @var string
-     */
+    /** @var string */
     private $mail;
 
-    final public function __construct(string $id, string $displayName, string $mail) {
-        $this->id          = $id;
-        $this->displayName = $displayName;
-        $this->mail        = $mail;
+    /** @var bool */
+    private $accountEnabled;
+
+    final public function __construct(string $id, string $displayName, string $mail, bool $accountEnabled) {
+        $this->id             = $id;
+        $this->displayName    = $displayName;
+        $this->mail           = $mail;
+        $this->accountEnabled = $accountEnabled;
     }
 
     public function getId() : string {
@@ -37,9 +35,13 @@ class User extends Model {
         return $this->mail;
     }
 
+    public function getAccountEnabled() : bool {
+        return $this->accountEnabled;
+    }
+
     public static function fromArray(array $data) : self {
-        foreach (['id', 'displayName', 'mail'] as $required) {
-            if (empty($data[$required])) {
+        foreach (['id', 'displayName', 'mail', 'accountEnabled'] as $required) {
+            if (!array_key_exists($required, $data)) {
                 throw new InvalidArgumentException(sprintf('Missing data element: %s', $required));
             }
         }
@@ -47,7 +49,8 @@ class User extends Model {
         return new static(
             (string) $data['id'],
             (string) $data['displayName'],
-            (string) $data['mail']
+            (string) $data['mail'],
+            (bool) $data['accountEnabled'],
         );
     }
 }

@@ -226,7 +226,7 @@ class ApiClient {
             } catch (InvalidArgumentException $e) {
                 return null;
             }
-        }, $this->getPaginatedData(sprintf('groups/%s/members', $groupId), ['id', 'displayName', 'mail'])));
+        }, $this->getPaginatedData(sprintf('groups/%s/members', $groupId), ['id', 'displayName', 'mail', 'accountEnabled'])));
     }
 
     /**
@@ -259,7 +259,7 @@ class ApiClient {
             } catch (InvalidArgumentException $e) {
                 return null;
             }
-        }, $this->getPaginatedData(sprintf('groups/%s/owners', $groupId), ['id', 'displayName', 'mail'])));
+        }, $this->getPaginatedData(sprintf('groups/%s/owners', $groupId), ['id', 'displayName', 'mail', 'accountEnabled'])));
     }
 
     /**
@@ -270,7 +270,11 @@ class ApiClient {
      */
     public function getUserById(string $userId) : ?Models\User {
         try {
-            $response = $this->httpClient->get(sprintf('users/%s', $userId));
+            $response = $this->httpClient->get(sprintf('users/%s', $userId), ['query' => [
+                '$select' => join(',', [
+                    'id', 'displayName', 'mail', 'accountEnabled'
+                ])
+            ]]);
         } catch (ClientException $e) {
             return null;
         }

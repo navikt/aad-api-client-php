@@ -385,12 +385,12 @@ class ApiClientTest extends TestCase {
                 new Response(200, [], (string) json_encode([
                     '@odata.context' => 'context-url',
                     '@odata.nextLink' => 'next-link',
-                    'value' => [['id' => 'first-id', 'displayName' => 'Name 1', 'mail' => 'mail1@nav.no']],
+                    'value' => [['id' => 'first-id', 'displayName' => 'Name 1', 'mail' => 'mail1@nav.no', 'accountEnabled' => false]],
                 ])),
                 new Response(200, [], (string) json_encode([
                     '@odata.context' => 'context-url',
                     'value' => [
-                        ['id' => 'second-id', 'displayName' => 'Name 2', 'mail' => 'mail2@nav.no'],
+                        ['id' => 'second-id', 'displayName' => 'Name 2', 'mail' => 'mail2@nav.no', 'accountEnabled' => true],
                         ['id' => 'third-id', 'displayName' => 'Name 3'], // incomplete, will trigger error internally
                     ],
                 ])),
@@ -401,7 +401,8 @@ class ApiClientTest extends TestCase {
         $members = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupMembers('group-id');
         $this->assertCount(2, $members);
         $this->assertCount(2, $clientHistory);
-        $this->assertSame('groups/group-id/members?%24select=id%2CdisplayName%2Cmail&%24top=100', (string) $clientHistory[0]['request']->getUri());
+        $this->assertSame('groups/group-id/members', $clientHistory[0]['request']->getUri()->getPath());
+        $this->assertSame('%24select=id%2CdisplayName%2Cmail%2CaccountEnabled&%24top=100', $clientHistory[0]['request']->getUri()->getQuery());
         $this->assertSame('next-link', (string) $clientHistory[1]['request']->getUri());
     }
 
@@ -419,12 +420,12 @@ class ApiClientTest extends TestCase {
                 new Response(200, [], (string) json_encode([
                     '@odata.context' => 'context-url',
                     '@odata.nextLink' => 'next-link',
-                    'value' => [['id' => 'first-id', 'displayName' => 'Name 1', 'mail' => 'mail1@nav.no']],
+                    'value' => [['id' => 'first-id', 'displayName' => 'Name 1', 'mail' => 'mail1@nav.no', 'accountEnabled' => true]],
                 ])),
                 new Response(200, [], (string) json_encode([
                     '@odata.context' => 'context-url',
                     'value' => [
-                        ['id' => 'second-id', 'displayName' => 'Name 2', 'mail' => 'mail2@nav.no'],
+                        ['id' => 'second-id', 'displayName' => 'Name 2', 'mail' => 'mail2@nav.no', 'accountEnabled' => true],
                         ['id' => 'third-id', 'displayName' => 'Name 3'], // incomplete, will trigger error internally
                     ],
                 ])),
@@ -435,7 +436,8 @@ class ApiClientTest extends TestCase {
         $owners = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupOwners('group-id');
         $this->assertCount(2, $owners);
         $this->assertCount(2, $clientHistory);
-        $this->assertSame('groups/group-id/owners?%24select=id%2CdisplayName%2Cmail&%24top=100', (string) $clientHistory[0]['request']->getUri());
+        $this->assertSame('groups/group-id/owners', $clientHistory[0]['request']->getUri()->getPath());
+        $this->assertSame('%24select=id%2CdisplayName%2Cmail%2CaccountEnabled&%24top=100', $clientHistory[0]['request']->getUri()->getQuery());
         $this->assertSame('next-link', (string) $clientHistory[1]['request']->getUri());
     }
 
@@ -448,7 +450,7 @@ class ApiClientTest extends TestCase {
         );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
-            [new Response(200, [], '{"id": "some-id", "displayName": "Bar, Foo", "mail": "foobar@nav.no"}')],
+            [new Response(200, [], '{"id": "some-id", "displayName": "Bar, Foo", "mail": "foobar@nav.no", "accountEnabled": false}')],
             $clientHistory
         );
 
@@ -456,7 +458,12 @@ class ApiClientTest extends TestCase {
 
         $this->assertCount(1, $clientHistory, 'Expected one request');
         $this->assertInstanceOf(Models\User::class, $aadUser);
-        $this->assertStringEndsWith('users/some-id', (string) $clientHistory[0]['request']->getUri());
+
+        $uri = $clientHistory[0]['request']->getUri();
+
+        $this->assertSame('users/some-id', $uri->getPath());
+        $this->assertSame('%24select=id%2CdisplayName%2Cmail%2CaccountEnabled', $uri->getQuery());
+
     }
 
     /**
