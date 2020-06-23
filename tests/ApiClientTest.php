@@ -201,7 +201,7 @@ class ApiClientTest extends TestCase {
             $clientHistory
         );
 
-        $aadGroup = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->createGroup(
+        (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->createGroup(
             'group name',
             'group description',
             ['Owner1@nav.no']
@@ -242,6 +242,7 @@ class ApiClientTest extends TestCase {
             [new Response(200, [], '{"access_token": "some secret token"}')]
         );
         $httpClient = $this->getMockClient([new Response(400)]);
+
         $this->expectExceptionObject(new RuntimeException('Unable to create group', 400));
         (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->createGroup(
             'group name',
@@ -264,7 +265,6 @@ class ApiClientTest extends TestCase {
         );
 
         (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->addGroupToEnterpriseApp('group-id', 'app-object-id', 'app-role-id');
-
         $this->assertCount(1, $clientHistory, 'Expected one request');
 
         $request = $clientHistory[0]['request'];
@@ -285,6 +285,7 @@ class ApiClientTest extends TestCase {
             [new Response(200, [], '{"access_token": "some secret token"}')]
         );
         $httpClient = $this->getMockClient([new Response(400)]);
+
         $this->expectExceptionObject(new RuntimeException('Unable to add group to enterprise application', 400));
         (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->addGroupToEnterpriseApp('group-id', 'app-object-id', 'app-role-id');
     }
@@ -524,7 +525,68 @@ class ApiClientTest extends TestCase {
             [new Response(200, [], '{"access_token": "some secret token"}')]
         );
         $httpClient = $this->getMockClient([new Response(401)]);
+
         $this->expectExceptionObject(new RuntimeException('Unable to fetch paginated data', 401));
         (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getUserGroups('user-id');
+    }
+
+    /**
+     * @covers ::addUserToGroup
+     */
+    public function testCanAddUserToGroup() : void {
+        $authClient = $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')]
+        );
+        $clientHistory = [];
+        $httpClient = $this->getMockClient([new Response(204)], $clientHistory);
+
+        (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->addUserToGroup('user-id', 'group-id');
+        $this->assertCount(1, $clientHistory);
+        $request = $clientHistory[0]['request'];
+        $this->assertSame('groups/group-id/members/$ref', (string) $request->getUri());
+        $this->assertSame(['@odata.id' => 'https://graph.microsoft.com/beta/users/user-id'], json_decode($request->getBody()->getContents(), true));
+    }
+
+    /**
+     * @covers ::addUserToGroup
+     */
+    public function testThrowsExceptionWhenAddingExistingUserToGroup() : void {
+        $authClient = $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')]
+        );
+        $clientHistory = [];
+        $httpClient = $this->getMockClient([new Response(400)], $clientHistory);
+
+        $this->expectExceptionObject(new RuntimeException('Unable to add user to group', 400));
+        (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->addUserToGroup('user-id', 'group-id');
+    }
+
+    /**
+     * @covers ::removeUserFromGroup
+     */
+    public function testCanRemoveUserFromGroup() : void {
+        $authClient = $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')]
+        );
+        $clientHistory = [];
+        $httpClient = $this->getMockClient([new Response(204)], $clientHistory);
+
+        (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->removeUserFromGroup('user-id', 'group-id');
+        $this->assertCount(1, $clientHistory);
+        $this->assertSame('groups/group-id/members/user-id/$ref', (string) $clientHistory[0]['request']->getUri());
+    }
+
+    /**
+     * @covers ::removeUserFromGroup
+     */
+    public function testThrowsExceptionWhenRemovingNonExistingMemberFromGroup() : void {
+        $authClient = $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')]
+        );
+        $clientHistory = [];
+        $httpClient = $this->getMockClient([new Response(400)], $clientHistory);
+
+        $this->expectExceptionObject(new RuntimeException('Unable to remove user from group', 400));
+        (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->removeUserFromGroup('user-id', 'group-id');
     }
 }

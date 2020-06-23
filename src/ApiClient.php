@@ -315,4 +315,36 @@ class ApiClient {
 
         return $entries;
     }
+
+    /**
+     * Add a specific user to a group
+     *
+     * @param string $userId
+     * @param string $groupId
+     * @return void
+     */
+    public function addUserToGroup(string $userId, string $groupId) : void {
+        try {
+            $this->httpClient->post(sprintf('groups/%s/members/$ref', $groupId), ['json' => [
+                '@odata.id' => sprintf('%s/users/%s', rtrim($this->baseUri, '/'), $userId),
+            ]]);
+        } catch(ClientException $e) {
+            throw new RuntimeException('Unable to add user to group', (int) $e->getCode(), $e);
+        }
+    }
+
+    /**
+     * Remove a specific user from a group
+     *
+     * @param string $userId
+     * @param string $groupId
+     * @return void
+     */
+    public function removeUserFromGroup(string $userId, string $groupId) : void {
+        try {
+            $this->httpClient->delete(sprintf('groups/%s/members/%s/$ref', $groupId, $userId));
+        } catch(ClientException $e) {
+            throw new RuntimeException('Unable to remove user from group', (int) $e->getCode(), $e);
+        }
+    }
 }
