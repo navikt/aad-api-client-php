@@ -2,7 +2,7 @@
 namespace NAVIT\AzureAd;
 
 use GuzzleHttp\Client as HttpClient;
-use GuzzleHttp\Exception\ClientException;
+use GuzzleHttp\Exception\BadResponseException;
 use InvalidArgumentException;
 use RuntimeException;
 
@@ -57,7 +57,7 @@ class ApiClient {
     public function getGroupById(string $groupId) : ?Models\Group {
         try {
             $response = $this->httpClient->get(sprintf('groups/%s', $groupId));
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             return null;
         }
 
@@ -78,7 +78,7 @@ class ApiClient {
                     '$filter' => sprintf('displayName eq \'%s\'', $displayName),
                 ],
             ]);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             return null;
         }
 
@@ -103,7 +103,7 @@ class ApiClient {
                     '$filter' => sprintf('mailNickname eq \'%s\'', $mailNickname),
                 ],
             ]);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             return null;
         }
 
@@ -144,7 +144,7 @@ class ApiClient {
                     'members@odata.bind' => array_map($prefixer, $members),
                 ]),
             ]);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             throw new RuntimeException('Unable to create group', (int) $e->getCode(), $e);
         }
 
@@ -166,7 +166,7 @@ class ApiClient {
                     'description' => $description,
                 ],
             ]);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             return false;
         }
 
@@ -191,7 +191,7 @@ class ApiClient {
                     'resourceId'  => $applicationObjectId,
                 ],
             ]);
-        } catch(ClientException $e) {
+        } catch(BadResponseException $e) {
             throw new RuntimeException('Unable to add group to enterprise application', (int) $e->getCode(), $e);
         }
     }
@@ -275,7 +275,7 @@ class ApiClient {
                     'id', 'displayName', 'mail', 'accountEnabled'
                 ])
             ]]);
-        } catch (ClientException $e) {
+        } catch (BadResponseException $e) {
             return null;
         }
 
@@ -302,7 +302,7 @@ class ApiClient {
         while (null !== $url) {
             try {
                 $response = $this->httpClient->get($url, array_filter(['query' => $query]));
-            } catch (ClientException $e) {
+            } catch (BadResponseException $e) {
                 throw new RuntimeException('Unable to fetch paginated data', (int) $e->getCode(), $e);
             }
 
@@ -328,7 +328,7 @@ class ApiClient {
             $this->httpClient->post(sprintf('groups/%s/members/$ref', $groupId), ['json' => [
                 '@odata.id' => sprintf('%s/users/%s', rtrim($this->baseUri, '/'), $userId),
             ]]);
-        } catch(ClientException $e) {
+        } catch(BadResponseException $e) {
             throw new RuntimeException('Unable to add user to group', (int) $e->getCode(), $e);
         }
     }
@@ -343,7 +343,7 @@ class ApiClient {
     public function removeUserFromGroup(string $userId, string $groupId) : void {
         try {
             $this->httpClient->delete(sprintf('groups/%s/members/%s/$ref', $groupId, $userId));
-        } catch(ClientException $e) {
+        } catch(BadResponseException $e) {
             throw new RuntimeException('Unable to remove user from group', (int) $e->getCode(), $e);
         }
     }
