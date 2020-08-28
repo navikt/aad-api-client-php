@@ -19,8 +19,8 @@
     "require-dev": {
         "php": "^7.4",
         "phpunit/phpunit": "^9.2",
-        "phpstan/phpstan": "^0.12.14",
-        "phpstan/phpstan-phpunit": "^0.12.11",
+        "phpstan/phpstan": "^0.12",
+        "phpstan/phpstan-phpunit": "^0.12",
         "phpstan/extension-installer": "^1.0",
         "vimeo/psalm": "^3.11",
         "psalm/plugin-phpunit": "^0.10.1"
@@ -39,7 +39,7 @@
         "lint": "for file in `git ls-files '*.php'`; do php -l $file; done",
         "test": "vendor/bin/phpunit",
         "test:coverage": "vendor/bin/phpunit --coverage-html build/coverage",
-        "phpstan": "vendor/bin/phpstan analyse src tests -l max --no-progress",
+        "phpstan": "vendor/bin/phpstan analyse src tests --no-progress",
         "psalm": "vendor/bin/psalm --no-progress",
         "sa": [
             "@phpstan",

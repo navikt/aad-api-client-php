@@ -39,11 +39,18 @@ class User extends Model {
         return $this->accountEnabled;
     }
 
+    /**
+     * @param array{id?: string, displayName?: string, mail?: string, accountEnabled?: bool} $data
+     */
     public static function fromArray(array $data) : self {
-        foreach (['id', 'displayName', 'mail', 'accountEnabled'] as $required) {
-            if (!array_key_exists($required, $data)) {
-                throw new InvalidArgumentException(sprintf('Missing data element: %s', $required));
-            }
+        if (!array_key_exists('id', $data)) {
+            throw new InvalidArgumentException('Missing data element: id');
+        } else if (!array_key_exists('displayName', $data)) {
+            throw new InvalidArgumentException('Missing data element: displayName');
+        } else if (!array_key_exists('mail', $data)) {
+            throw new InvalidArgumentException('Missing data element: mail');
+        } else if (!array_key_exists('accountEnabled', $data)) {
+            throw new InvalidArgumentException('Missing data element: accountEnabled');
         }
 
         return new static(

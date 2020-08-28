@@ -8,6 +8,7 @@ abstract class Model {
     /**
      * Create an instance from an array
      *
+     * @param array<string, mixed> $data
      * @throws InvalidArgumentException
      * @return self
      */
@@ -19,7 +20,7 @@ abstract class Model {
      * @throws InvalidArgumentException
      */
     public static function fromApiResponse(ResponseInterface $response) : self {
-        /** @var array */
+        /** @var array<string, mixed> */
         $data = json_decode($response->getBody()->getContents(), true);
         return static::fromArray($data);
     }

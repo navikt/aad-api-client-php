@@ -17,10 +17,8 @@ use RuntimeException;
 class ApiClientTest extends TestCase {
     /**
      * @param ResponseInterface[] $responses
-     * @param array $history
-     * @param-out array<int, array{response: ResponseInterface, request: RequestInterface}> $history
+     * @param array<int, array{response: ResponseInterface, request: RequestInterface}> $history $history
      * @return HttpClient
-     * @psalm-suppress ReferenceConstraintViolation
      */
     private function getMockClient(array $responses, array &$history = []) : HttpClient {
         $handler = HandlerStack::create(new MockHandler($responses));
@@ -30,14 +28,22 @@ class ApiClientTest extends TestCase {
     }
 
     /**
+     * @param array<int, array{response: ResponseInterface, request: RequestInterface}> $history $history
+     * @return HttpClient
+     */
+    private function getMockedAuthClient(array &$history = []) : HttpClient {
+        return $this->getMockClient(
+            [new Response(200, [], '{"access_token": "some secret token"}')],
+            $history
+        );
+    }
+
+    /**
      * @covers ::__construct
      */
     public function testCanConstructClient() : void {
         $clientHistory = [];
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')],
-            $clientHistory
-        );
+        $authClient = $this->getMockedAuthClient($clientHistory);
 
         new ApiClient($id = 'id', $secret = 'secret', 'nav.no', $authClient);
 
@@ -54,16 +60,13 @@ class ApiClientTest extends TestCase {
      * @covers ::getGroupById
      */
     public function testCanGetGroupById() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [new Response(200, [], '{"id": "some-id", "displayName": "some-display-name", "description": "some description", "mailNickname": "mail"}')],
             $clientHistory
         );
 
-        $aadGroup = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupById('some-id');
+        $aadGroup = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getGroupById('some-id');
 
         $this->assertCount(1, $clientHistory, 'Expected one request');
         $this->assertInstanceOf(Models\Group::class, $aadGroup);
@@ -74,30 +77,28 @@ class ApiClientTest extends TestCase {
      * @covers ::getGroupById
      */
     public function testReturnsNullWhenGroupByIdRequestFails() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
+        $this->assertNull(
+            (new ApiClient(
+                'id',
+                'secret',
+                'nav.no',
+                $this->getMockedAuthClient(),
+                $this->getMockClient([new Response(404)])
+            ))->getGroupById('some-id')
         );
-        $httpClient = $this->getMockClient(
-            [new Response(404)]
-        );
-
-        $this->assertNull((new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupById('some-id'));
     }
 
     /**
      * @covers ::getGroupByDisplayName
      */
     public function testCanGetGroupByDisplayName() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [new Response(200, [], '{"value": [{"id": "some-id", "displayName": "some-display-name", "description": "some description", "mailNickname": "mail"}]}')],
             $clientHistory
         );
 
-        $aadGroup = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupByDisplayName('some-display-name');
+        $aadGroup = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getGroupByDisplayName('some-display-name');
 
         $this->assertCount(1, $clientHistory, 'Expected one request');
         $this->assertInstanceOf(Models\Group::class, $aadGroup);
@@ -108,30 +109,24 @@ class ApiClientTest extends TestCase {
      * @covers ::getGroupByDisplayName
      */
     public function testReturnsNullWhenGroupByNameRequestFails() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $httpClient = $this->getMockClient(
             [new Response(404)]
         );
 
-        $this->assertNull((new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupByDisplayName('some display name'));
+        $this->assertNull((new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getGroupByDisplayName('some display name'));
     }
 
     /**
      * @covers ::getGroupByDisplayName
      */
     public function testReturnsNullWhenGroupDoesNotExist() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [new Response(200, [], '{"value": []}')],
             $clientHistory
         );
 
-        $this->assertNull((new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupByDisplayName('some-display-name'));
+        $this->assertNull((new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getGroupByDisplayName('some-display-name'));
         $this->assertCount(1, $clientHistory, 'Expected one request');
         $this->assertStringContainsString('filter=displayName%20eq%20%27some-display-name%27', $clientHistory[0]['request']->getUri()->getQuery());
     }
@@ -140,16 +135,13 @@ class ApiClientTest extends TestCase {
      * @covers ::getGroupByMailNickname
      */
     public function testCanGetGroupByMailNickname() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [new Response(200, [], '{"value": [{"id": "some-id", "displayName": "some-display-name", "description": "some description", "mailNickname": "mail"}]}')],
             $clientHistory
         );
 
-        $aadGroup = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupByMailNickname('mail');
+        $aadGroup = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getGroupByMailNickname('mail');
 
         $this->assertCount(1, $clientHistory, 'Expected one request');
         $this->assertInstanceOf(Models\Group::class, $aadGroup);
@@ -160,30 +152,28 @@ class ApiClientTest extends TestCase {
      * @covers ::getGroupByMailNickname
      */
     public function testReturnsNullWhenGroupByMailNicknameRequestFails() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
+        $this->assertNull(
+            (new ApiClient(
+                'id',
+                'secret',
+                'nav.no',
+                $this->getMockedAuthClient(),
+                $this->getMockClient([new Response(404)])
+            ))->getGroupByMailNickname('some mail nickname')
         );
-        $httpClient = $this->getMockClient(
-            [new Response(404)]
-        );
-
-        $this->assertNull((new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupByMailNickname('some mail nickname'));
     }
 
     /**
      * @covers ::getGroupByMailNickname
      */
     public function testReturnsNullWhenGroupWithNailNicknameDoesNotExist() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [new Response(200, [], '{"value": []}')],
             $clientHistory
         );
 
-        $this->assertNull((new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupByMailNickname('some-mailnickname'));
+        $this->assertNull((new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getGroupByMailNickname('some-mailnickname'));
         $this->assertCount(1, $clientHistory, 'Expected one request');
         $this->assertStringContainsString('filter=mailNickname%20eq%20%27some-mailnickname%27', $clientHistory[0]['request']->getUri()->getQuery());
     }
@@ -192,16 +182,13 @@ class ApiClientTest extends TestCase {
      * @covers ::createGroup
      */
     public function testCanCreateGroup() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [new Response(201, [], '{"id": "some-id", "displayName": "some-display-name", "description": "some description", "mailNickname": "mail"}')],
             $clientHistory
         );
 
-        (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->createGroup(
+        (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->createGroup(
             'group name',
             'group description',
             ['Owner1@nav.no']
@@ -238,13 +225,10 @@ class ApiClientTest extends TestCase {
      * @covers ::createGroup
      */
     public function testThrowsExceptionWhenFailingToCreateGroup() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $httpClient = $this->getMockClient([new Response(400)]);
 
         $this->expectExceptionObject(new RuntimeException('Unable to create group', 400));
-        (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->createGroup(
+        (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->createGroup(
             'group name',
             'group description',
             ['Owner1@nav.no']
@@ -255,16 +239,13 @@ class ApiClientTest extends TestCase {
      * @covers ::addGroupToEnterpriseApp
      */
     public function testCanAddGroupToEnterpriseApp() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [new Response()],
             $clientHistory
         );
 
-        (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->addGroupToEnterpriseApp('group-id', 'app-object-id', 'app-role-id');
+        (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->addGroupToEnterpriseApp('group-id', 'app-object-id', 'app-role-id');
         $this->assertCount(1, $clientHistory, 'Expected one request');
 
         $request = $clientHistory[0]['request'];
@@ -281,13 +262,14 @@ class ApiClientTest extends TestCase {
      * @covers ::addGroupToEnterpriseApp
      */
     public function testThrowsExceptionWhenFailingToAddGroupToEnterpriseApplication() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
-        $httpClient = $this->getMockClient([new Response(400)]);
-
         $this->expectExceptionObject(new RuntimeException('Unable to add group to enterprise application', 400));
-        (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->addGroupToEnterpriseApp('group-id', 'app-object-id', 'app-role-id');
+        (new ApiClient(
+            'id',
+            'secret',
+            'nav.no',
+            $this->getMockedAuthClient(),
+            $this->getMockClient([new Response(400)])
+        ))->addGroupToEnterpriseApp('group-id', 'app-object-id', 'app-role-id');
     }
 
     /**
@@ -295,9 +277,6 @@ class ApiClientTest extends TestCase {
      * @covers ::getPaginatedData
      */
     public function testCanGetEnterpriseAppGroups() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [
@@ -331,7 +310,7 @@ class ApiClientTest extends TestCase {
             $clientHistory
         );
 
-        $groups = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getEnterpriseAppGroups('app-object-id');
+        $groups = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getEnterpriseAppGroups('app-object-id');
         $this->assertCount(2, $groups);
         $this->assertCount(5, $clientHistory);
         $this->assertSame('servicePrincipals/app-object-id/appRoleAssignedTo?%24select=principalId%2CprincipalType&%24top=100', (string) $clientHistory[0]['request']->getUri());
@@ -345,13 +324,10 @@ class ApiClientTest extends TestCase {
      * @covers ::setGroupDescription
      */
     public function testCanSetGroupDescription() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $clientHistory = [];
         $httpClient = $this->getMockClient([new Response(200)], $clientHistory);
 
-        $this->assertTrue((new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->setGroupDescription('group-id', 'description'));
+        $this->assertTrue((new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->setGroupDescription('group-id', 'description'));
         $this->assertCount(1, $clientHistory);
         $this->assertSame('groups/group-id', (string) $clientHistory[0]['request']->getUri());
         $this->assertSame('{"description":"description"}', (string) $clientHistory[0]['request']->getBody());
@@ -361,13 +337,10 @@ class ApiClientTest extends TestCase {
      * @covers ::setGroupDescription
      */
     public function testSettingGroupDescriptionReturnsFalseOnFailure() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $clientHistory = [];
         $httpClient = $this->getMockClient([new Response(404)], $clientHistory);
 
-        $this->assertFalse((new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->setGroupDescription('group-id', 'description'));
+        $this->assertFalse((new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->setGroupDescription('group-id', 'description'));
         $this->assertCount(1, $clientHistory);
         $this->assertSame('groups/group-id', (string) $clientHistory[0]['request']->getUri());
     }
@@ -377,9 +350,6 @@ class ApiClientTest extends TestCase {
      * @covers ::getPaginatedData
      */
     public function testCanGetGroupMembers() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [
@@ -399,7 +369,7 @@ class ApiClientTest extends TestCase {
             $clientHistory
         );
 
-        $members = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupMembers('group-id');
+        $members = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getGroupMembers('group-id');
         $this->assertCount(2, $members);
         $this->assertCount(2, $clientHistory);
         $this->assertSame('groups/group-id/members', $clientHistory[0]['request']->getUri()->getPath());
@@ -412,9 +382,6 @@ class ApiClientTest extends TestCase {
      * @covers ::getPaginatedData
      */
     public function testCanGetGroupOwners() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [
@@ -434,7 +401,7 @@ class ApiClientTest extends TestCase {
             $clientHistory
         );
 
-        $owners = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getGroupOwners('group-id');
+        $owners = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getGroupOwners('group-id');
         $this->assertCount(2, $owners);
         $this->assertCount(2, $clientHistory);
         $this->assertSame('groups/group-id/owners', $clientHistory[0]['request']->getUri()->getPath());
@@ -446,16 +413,13 @@ class ApiClientTest extends TestCase {
      * @covers ::getUserById
      */
     public function testCanGetUserById() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [new Response(200, [], '{"id": "some-id", "displayName": "Bar, Foo", "mail": "foobar@nav.no", "accountEnabled": false}')],
             $clientHistory
         );
 
-        $aadUser = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getUserById('some-id');
+        $aadUser = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getUserById('some-id');
 
         $this->assertCount(1, $clientHistory, 'Expected one request');
         $this->assertInstanceOf(Models\User::class, $aadUser);
@@ -471,14 +435,11 @@ class ApiClientTest extends TestCase {
      * @covers ::getUserById
      */
     public function testReturnsNullWhenUserByIdRequestFails() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $httpClient = $this->getMockClient(
             [new Response(404)]
         );
 
-        $this->assertNull((new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getUserById('some-id'));
+        $this->assertNull((new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getUserById('some-id'));
     }
 
     /**
@@ -486,9 +447,6 @@ class ApiClientTest extends TestCase {
      * @covers ::getPaginatedData
      */
     public function testCanGetUserGroups() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [
@@ -510,7 +468,7 @@ class ApiClientTest extends TestCase {
             $clientHistory
         );
 
-        $groups = (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getUserGroups('user-id');
+        $groups = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getUserGroups('user-id');
         $this->assertCount(2, $groups);
         $this->assertCount(2, $clientHistory);
         $this->assertSame('users/user-id/memberOf/microsoft.graph.group?%24select=id%2CdisplayName%2Cdescription%2CmailNickname&%24top=100', (string) $clientHistory[0]['request']->getUri());
@@ -521,26 +479,24 @@ class ApiClientTest extends TestCase {
      * @covers ::getPaginatedData
      */
     public function testThrowsExceptionWhenUnableToFetchPaginatedData() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
-        $httpClient = $this->getMockClient([new Response(401)]);
-
         $this->expectExceptionObject(new RuntimeException('Unable to fetch paginated data', 401));
-        (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->getUserGroups('user-id');
+        (new ApiClient(
+            'id',
+            'secret',
+            'nav.no',
+            $this->getMockedAuthClient(),
+            $this->getMockClient([new Response(401)])
+        ))->getUserGroups('user-id');
     }
 
     /**
      * @covers ::addUserToGroup
      */
     public function testCanAddUserToGroup() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $clientHistory = [];
         $httpClient = $this->getMockClient([new Response(204)], $clientHistory);
 
-        (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->addUserToGroup('user-id', 'group-id');
+        (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->addUserToGroup('user-id', 'group-id');
         $this->assertCount(1, $clientHistory);
         $request = $clientHistory[0]['request'];
         $this->assertSame('groups/group-id/members/$ref', (string) $request->getUri());
@@ -551,27 +507,21 @@ class ApiClientTest extends TestCase {
      * @covers ::addUserToGroup
      */
     public function testThrowsExceptionWhenAddingExistingUserToGroup() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $clientHistory = [];
         $httpClient = $this->getMockClient([new Response(400)], $clientHistory);
 
         $this->expectExceptionObject(new RuntimeException('Unable to add user to group', 400));
-        (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->addUserToGroup('user-id', 'group-id');
+        (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->addUserToGroup('user-id', 'group-id');
     }
 
     /**
      * @covers ::removeUserFromGroup
      */
     public function testCanRemoveUserFromGroup() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $clientHistory = [];
         $httpClient = $this->getMockClient([new Response(204)], $clientHistory);
 
-        (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->removeUserFromGroup('user-id', 'group-id');
+        (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->removeUserFromGroup('user-id', 'group-id');
         $this->assertCount(1, $clientHistory);
         $this->assertSame('groups/group-id/members/user-id/$ref', (string) $clientHistory[0]['request']->getUri());
     }
@@ -580,13 +530,36 @@ class ApiClientTest extends TestCase {
      * @covers ::removeUserFromGroup
      */
     public function testThrowsExceptionWhenRemovingNonExistingMemberFromGroup() : void {
-        $authClient = $this->getMockClient(
-            [new Response(200, [], '{"access_token": "some secret token"}')]
-        );
         $clientHistory = [];
         $httpClient = $this->getMockClient([new Response(400)], $clientHistory);
 
         $this->expectExceptionObject(new RuntimeException('Unable to remove user from group', 400));
-        (new ApiClient('id', 'secret', 'nav.no', $authClient, $httpClient))->removeUserFromGroup('user-id', 'group-id');
+        (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->removeUserFromGroup('user-id', 'group-id');
+    }
+
+    /**
+     * @covers ::emptyGroup
+     */
+    public function testCanEmptyGroup() : void {
+        $clientHistory = [];
+        $httpClient = $this->getMockClient([
+            new Response(200, [], (string) json_encode([
+                'value' => [
+                    ['id' => 'id-1'],
+                    ['id' => 'id-2'],
+                    ['id' => 'id-3'],
+                ],
+            ])),
+            new Response(204),
+            new Response(204),
+            new Response(204),
+        ], $clientHistory);
+
+        (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->emptyGroup('group-id');
+
+        $this->assertCount(4, $clientHistory, 'Expected 4 transactions');
+        $this->assertSame('groups/group-id/members/id-1/$ref', (string) $clientHistory[1]['request']->getUri());
+        $this->assertSame('groups/group-id/members/id-2/$ref', (string) $clientHistory[2]['request']->getUri());
+        $this->assertSame('groups/group-id/members/id-3/$ref', (string) $clientHistory[3]['request']->getUri());
     }
 }
