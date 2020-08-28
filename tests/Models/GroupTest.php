@@ -45,7 +45,7 @@ class GroupTest extends TestCase {
     }
 
     /**
-     * @return array<string, array{0: array, 1: string}>
+     * @return array<string, array{0: array{id?: string, displayName?: string, description?: string, mailNickname?: string}, 1: string}>
      */
     public function getInvalidData() : array {
         return [
@@ -67,6 +67,7 @@ class GroupTest extends TestCase {
     /**
      * @covers ::fromArray
      * @dataProvider getInvalidData
+     * @param array{id?: string, displayName?: string, description?: string, mailNickname?: string} $data
      */
     public function testCanValidateInput(array $data, string $errorMessage) : void {
         $this->expectExceptionObject(new InvalidArgumentException($errorMessage));

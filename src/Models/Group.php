@@ -47,11 +47,18 @@ class Group extends Model {
         return $this->mailNickname;
     }
 
+    /**
+     * @param array{id?: string, displayName?: string, description?: string, mailNickname?: string} $data
+     */
     public static function fromArray(array $data) : self {
-        foreach (['id', 'displayName', 'description', 'mailNickname'] as $required) {
-            if (empty($data[$required])) {
-                throw new InvalidArgumentException(sprintf('Missing data element: %s', $required));
-            }
+        if (!array_key_exists('id', $data)) {
+            throw new InvalidArgumentException('Missing data element: id');
+        } else if (!array_key_exists('displayName', $data)) {
+            throw new InvalidArgumentException('Missing data element: displayName');
+        } else if (!array_key_exists('description', $data)) {
+            throw new InvalidArgumentException('Missing data element: description');
+        } else if (!array_key_exists('mailNickname', $data)) {
+            throw new InvalidArgumentException('Missing data element: mailNickname');
         }
 
         return new static(
