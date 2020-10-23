@@ -14,23 +14,27 @@ jobs:
           php -m
 
       - name: Validate composer files
-        run: composer validate
+        run: composer validate --strict
 
       - name: Lint all PHP files
         run: composer run lint
 
+      - name: Get Composer Cache Directory
+        id: composer-cache-dir
+        run: |
+          echo "::set-output name=dir::$(composer config cache-files-dir)"
+
       - name: Cache Composer packages
         id: composer-cache
-        uses: actions/cache@v1
+        uses: actions/cache@v2
         with:
-          path: vendor
+          path: ${{ steps.composer-cache-dir.outputs.dir }}
           key: ${{ runner.os }}-composer-${{ hashFiles('**/composer.lock') }}
           restore-keys: |
             ${{ runner.os }}-composer-
 
       - name: Install dependencies
-        if: steps.composer-cache.outputs.cache-hit != 'true'
-        run: composer install --prefer-dist --no-progress --no-suggest --no-ansi
+        run: composer install --prefer-dist --no-suggest -o
 
       - name: Run test suite
         run: composer run test

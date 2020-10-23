@@ -1,21 +1,40 @@
 <?php declare(strict_types=1);
 namespace NAVIT\AzureAd;
 
-use GuzzleHttp\Client as HttpClient;
-use GuzzleHttp\Exception\BadResponseException;
+use GuzzleHttp\{
+    Client as HttpClient,
+    Exception\BadResponseException,
+};
 use InvalidArgumentException;
 use RuntimeException;
 
 class ApiClient {
-    /**
-     * @var HttpClient
-     */
-    private $httpClient;
+    private HttpClient $httpClient;
+    private string $baseUri = 'https://graph.microsoft.com/beta/';
 
     /**
-     * @var string
+     * Fields to fetch for user queries
+     *
+     * @var string[]
      */
-    private $baseUri = 'https://graph.microsoft.com/beta/';
+    private array $userFields = [
+        'id',
+        'displayName',
+        'mail',
+        'accountEnabled',
+    ];
+
+    /**
+     * Fields to fetch for groups
+     *
+     * @var string[]
+     */
+    private array $groupFields = [
+        'id',
+        'displayName',
+        'description',
+        'mailNickname',
+    ];
 
     /**
      * Class constructor
@@ -36,7 +55,7 @@ class ApiClient {
             ],
         ]);
 
-        /** @var array{access_token: string} */
+        /** @var array{access_token:string} */
         $response = json_decode((string) $response->getBody(), true);
 
         $this->httpClient = $httpClient ?: new HttpClient([
@@ -49,29 +68,66 @@ class ApiClient {
     }
 
     /**
+     * Get the current user fields
+     *
+     * @return string[]
+     */
+    public function getUserFields() : array {
+        return $this->userFields;
+    }
+
+    /**
+     * Set which user fields to fetch
+     *
+     * @param string[] $fields
+     * @return self
+     */
+    public function setUserFields(array $fields) : self {
+        $this->userFields = $fields;
+        return $this;
+    }
+
+    /**
+     * Get the current group fields
+     *
+     * @return string[]
+     */
+    public function getGroupFields() : array {
+        return $this->groupFields;
+    }
+
+    /**
+     * Set which group fields to fetch
+     *
+     * @param string[] $fields
+     */
+    public function setGroupFields(array $fields) : self {
+        $this->groupFields = $fields;
+        return $this;
+    }
+
+    /**
      * Get a group by ID
      *
      * @param string $groupId
-     * @return Models\Group|null
+     * @return ?array<string,mixed>
      */
-    public function getGroupById(string $groupId) : ?Models\Group {
+    public function getGroupById(string $groupId) : ?array {
         try {
-            $response = $this->httpClient->get(sprintf('groups/%s', $groupId));
+            /** @var array<string,mixed> */
+            return json_decode($this->httpClient->get(sprintf('groups/%s', $groupId))->getBody()->getContents(), true);
         } catch (BadResponseException $e) {
             return null;
         }
-
-        /** @var Models\Group */
-        return Models\Group::fromApiResponse($response);
     }
 
     /**
      * Get a group by display name
      *
      * @param string $displayName
-     * @return Models\Group|null
+     * @return ?array<string,mixed>
      */
-    public function getGroupByDisplayName(string $displayName) : ?Models\Group {
+    public function getGroupByDisplayName(string $displayName) : ?array {
         try {
             $response = $this->httpClient->get('groups', [
                 'query' => [
@@ -82,11 +138,11 @@ class ApiClient {
             return null;
         }
 
-        /** @var array{value: array<int, array{id?: string, displayName?: string, description?: string, mailNickname?: string}>} */
+        /** @var array{value:array<int,array{id?:string,displayName?:string,description?:string,mailNickname?:string}>} */
         $groups = json_decode($response->getBody()->getContents(), true);
 
         return !empty($groups['value'])
-            ? Models\Group::fromArray($groups['value'][0])
+            ? $groups['value'][0]
             : null;
     }
 
@@ -94,9 +150,9 @@ class ApiClient {
      * Get a group by mailNickname
      *
      * @param string $mailNickname
-     * @return Models\Group|null
+     * @return ?array<string,mixed>
      */
-    public function getGroupByMailNickname(string $mailNickname) : ?Models\Group {
+    public function getGroupByMailNickname(string $mailNickname) : ?array {
         try {
             $response = $this->httpClient->get('groups', [
                 'query' => [
@@ -107,11 +163,11 @@ class ApiClient {
             return null;
         }
 
-        /** @var array{value: array<int, array{id?: string, displayName?: string, description?: string, mailNickname?: string}>} */
+        /** @var array{value:array<int,array{id?:string,displayName?:string,description?:string,mailNickname?:string}>} */
         $groups = json_decode($response->getBody()->getContents(), true);
 
         return !empty($groups['value'])
-            ? Models\Group::fromArray($groups['value'][0])
+            ? $groups['value'][0]
             : null;
     }
 
@@ -123,15 +179,16 @@ class ApiClient {
      * @param string[] $owners List of users to be added as owners
      * @param string[] $members List of users to be added as members
      * @throws RuntimeException
-     * @return Models\Group
+     * @return array<string,mixed>
      */
-    public function createGroup(string $displayName, string $description, array $owners = [], array $members = []) : Models\Group {
+    public function createGroup(string $displayName, string $description, array $owners = [], array $members = []) : array {
         $prefixer = function(string $user) : string {
             return sprintf('%s/users/%s', rtrim($this->baseUri, '/'), $user);
         };
 
         try {
-            $response = $this->httpClient->post('groups', [
+            /** @var array<string,mixed> */
+            return json_decode($this->httpClient->post('groups', [
                 'json' => array_filter([
                     'displayName'        => $displayName,
                     'description'        => $description,
@@ -143,13 +200,10 @@ class ApiClient {
                     'owners@odata.bind'  => array_map($prefixer, $owners),
                     'members@odata.bind' => array_map($prefixer, $members),
                 ]),
-            ]);
+            ])->getBody()->getContents(), true);
         } catch (BadResponseException $e) {
             throw new RuntimeException('Unable to create group', (int) $e->getCode(), $e);
         }
-
-        /** @var Models\Group */
-        return Models\Group::fromApiResponse($response);
     }
 
     /**
@@ -200,12 +254,12 @@ class ApiClient {
      * Get all groups connected to a specific enterprise application in Azure AD
      *
      * @param string $applicationObjectId The object ID of the application
-     * @return Models\Group[]
+     * @return array<int,array<string,mixed>>
      */
     public function getEnterpriseAppGroups(string $applicationObjectId) : array {
         $url = sprintf('servicePrincipals/%s/appRoleAssignedTo', $applicationObjectId);
 
-        return array_filter(array_map(function(array $group) : ?Models\Group {
+        return array_filter(array_map(function(array $group) : ?array {
             return $this->getGroupById((string) $group['principalId']);
         }, array_filter($this->getPaginatedData($url, ['principalId', 'principalType']), function(array $group) : bool {
             return 'group' === strtolower((string) $group['principalType']);
@@ -216,80 +270,49 @@ class ApiClient {
      * Get all members in a group
      *
      * @param string $groupId The group ID
-     * @return Models\GroupMember[] Returns an array of users
+     * @return array<int,array<string,mixed>>
      */
     public function getGroupMembers(string $groupId) : array {
-        /** @var array<int, array{id?: string, displayName?: string, mail?: string, accountEnabled?: bool}> */
-        $members = $this->getPaginatedData(sprintf('groups/%s/members', $groupId), ['id', 'displayName', 'mail', 'accountEnabled']);
-
-        return array_filter(array_map(function(array $member) : ?Models\GroupMember {
-            try {
-                /** @var Models\GroupMember */
-                return Models\GroupMember::fromArray($member);
-            } catch (InvalidArgumentException $e) {
-                return null;
-            }
-        }, $members));
+        return $this->getPaginatedData(sprintf('groups/%s/members', $groupId), $this->userFields);
     }
 
     /**
      * Get all groups that a user is a member of
      *
      * @param string $userId ID of the user
-     * @return Models\Group[]
+     * @return array<int,array<string,mixed>>
      */
     public function getUserGroups(string $userId) : array {
-        /** @var array<int, array{id?: string, displayName?: string, description?: string, mailNickname?: string}> */
-        $groups = $this->getPaginatedData(sprintf('users/%s/memberOf/microsoft.graph.group', $userId), ['id', 'displayName', 'description', 'mailNickname']);
-
-        return array_filter(array_map(function(array $group) : ?Models\Group {
-            try {
-                return Models\Group::fromArray($group);
-            } catch (InvalidArgumentException $e) {
-                return null;
-            }
-        }, $groups));
+        return $this->getPaginatedData(sprintf('users/%s/memberOf/microsoft.graph.group', $userId), $this->groupFields);
     }
 
     /**
      * Get all owners of a group
      *
      * @param string $groupId The group ID
-     * @return Models\GroupOwner[] Returns an array of users
+     * @return array<int,array<string,mixed>>
      */
     public function getGroupOwners(string $groupId) : array {
-        /** @var array<int, array{id?: string, displayName?: string, mail?: string, accountEnabled?: bool}> */
-        $members = $this->getPaginatedData(sprintf('groups/%s/owners', $groupId), ['id', 'displayName', 'mail', 'accountEnabled']);
-
-        return array_filter(array_map(function(array $member) : ?Models\GroupOwner {
-            try {
-                /** @var Models\GroupOwner */
-                return Models\GroupOwner::fromArray($member);
-            } catch (InvalidArgumentException $e) {
-                return null;
-            }
-        }, $members));
+        return $this->getPaginatedData(sprintf('groups/%s/owners', $groupId), $this->userFields);
     }
 
     /**
      * Get a user by ID
      *
      * @param string $userId
-     * @return ?Models\User
+     * @return ?array<string,mixed>
      */
-    public function getUserById(string $userId) : ?Models\User {
+    public function getUserById(string $userId) : ?array {
         try {
-            $response = $this->httpClient->get(sprintf('users/%s', $userId), ['query' => [
+            /** @var array<string,mixed> */
+            return json_decode($this->httpClient->get(sprintf('users/%s', $userId), ['query' => [
                 '$select' => join(',', [
                     'id', 'displayName', 'mail', 'accountEnabled'
                 ])
-            ]]);
+            ]])->getBody()->getContents(), true);
         } catch (BadResponseException $e) {
             return null;
         }
-
-        /** @var Models\User */
-        return Models\User::fromApiResponse($response);
     }
 
     /**
@@ -331,7 +354,7 @@ class ApiClient {
      * @return void
      */
     public function emptyGroup(string $groupId) : void {
-        /** @var array<int, array{id: string}> */
+        /** @var array<int,array{id:string}> */
         $members = $this->getPaginatedData(sprintf('groups/%s/members', $groupId), ['id']);
 
         foreach ($members as $member) {
@@ -345,13 +368,13 @@ class ApiClient {
      * @param string $url The URL to fetch
      * @param string[] $fields Fields to fetch
      * @throws RuntimeException
-     * @return array<int, mixed>
+     * @return array<int,array<string,mixed>>
      */
     private function getPaginatedData(string $url, array $fields = []) : array {
         $entries = [];
 
         $query = array_filter([
-            '$select' => join(',', $fields),
+            '$select' => join(',', array_map('trim', $fields)),
             '$top'    => 100
         ]);
 
@@ -362,11 +385,11 @@ class ApiClient {
                 throw new RuntimeException('Unable to fetch paginated data', (int) $e->getCode(), $e);
             }
 
-            /** @var array{value: array<int, mixed>, "@odata.nextLink": ?string} */
-            $body = json_decode($response->getBody()->getContents(), true);
+            /** @var array{value:array<int,array<string,mixed>>,"@odata.nextLink":?string} */
+            $body    = json_decode($response->getBody()->getContents(), true);
             $entries = array_merge($entries, $body['value']);
-            $url = $body['@odata.nextLink'] ?? null;
-            $query = []; // Only need this for the first request
+            $url     = $body['@odata.nextLink'] ?? null;
+            $query   = []; // Only need this for the first request
         }
 
         return $entries;
