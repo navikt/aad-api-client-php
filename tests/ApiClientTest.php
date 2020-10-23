@@ -2,13 +2,14 @@
 namespace NAVIT\AzureAd;
 
 use PHPUnit\Framework\TestCase;
-use GuzzleHttp\Client as HttpClient;
-use GuzzleHttp\Handler\MockHandler;
-use GuzzleHttp\HandlerStack;
-use GuzzleHttp\Psr7\Response;
-use GuzzleHttp\Middleware;
-use Psr\Http\Message\RequestInterface;
-use Psr\Http\Message\ResponseInterface;
+use GuzzleHttp\{
+    Client as HttpClient,
+    Handler\MockHandler,
+    HandlerStack,
+    Psr7\Response,
+    Psr7\Request,
+    Middleware,
+};
 use RuntimeException;
 
 /**
@@ -16,8 +17,9 @@ use RuntimeException;
  */
 class ApiClientTest extends TestCase {
     /**
-     * @param ResponseInterface[] $responses
-     * @param array<int, array{response: ResponseInterface, request: RequestInterface}> $history $history
+     * @param array<int,Response> $responses
+     * @param array<int,array{response:Response,request:Request}> $history
+     * @param-out array<int,array{response:Response,request:Request}> $history
      * @return HttpClient
      */
     private function getMockClient(array $responses, array &$history = []) : HttpClient {
@@ -28,7 +30,7 @@ class ApiClientTest extends TestCase {
     }
 
     /**
-     * @param array<int, array{response: ResponseInterface, request: RequestInterface}> $history $history
+     * @param array<int,array{response:Response,request:Request}> $history $history
      * @return HttpClient
      */
     private function getMockedAuthClient(array &$history = []) : HttpClient {
@@ -69,7 +71,12 @@ class ApiClientTest extends TestCase {
         $aadGroup = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getGroupById('some-id');
 
         $this->assertCount(1, $clientHistory, 'Expected one request');
-        $this->assertInstanceOf(Models\Group::class, $aadGroup);
+        $this->assertSame([
+            'id'           => 'some-id',
+            'displayName'  => 'some-display-name',
+            'description'  => 'some description',
+            'mailNickname' => 'mail',
+        ], $aadGroup);
         $this->assertStringEndsWith('groups/some-id', (string) $clientHistory[0]['request']->getUri());
     }
 
@@ -101,7 +108,12 @@ class ApiClientTest extends TestCase {
         $aadGroup = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getGroupByDisplayName('some-display-name');
 
         $this->assertCount(1, $clientHistory, 'Expected one request');
-        $this->assertInstanceOf(Models\Group::class, $aadGroup);
+        $this->assertSame([
+            'id'           => 'some-id',
+            'displayName'  => 'some-display-name',
+            'description'  => 'some description',
+            'mailNickname' => 'mail',
+        ], $aadGroup);
         $this->assertStringContainsString('filter=displayName%20eq%20%27some-display-name%27', $clientHistory[0]['request']->getUri()->getQuery());
     }
 
@@ -144,7 +156,12 @@ class ApiClientTest extends TestCase {
         $aadGroup = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getGroupByMailNickname('mail');
 
         $this->assertCount(1, $clientHistory, 'Expected one request');
-        $this->assertInstanceOf(Models\Group::class, $aadGroup);
+        $this->assertSame([
+            'id'           => 'some-id',
+            'displayName'  => 'some-display-name',
+            'description'  => 'some description',
+            'mailNickname' => 'mail',
+        ], $aadGroup);
         $this->assertStringContainsString('filter=mailNickname%20eq%20%27mail%27', $clientHistory[0]['request']->getUri()->getQuery());
     }
 
@@ -356,13 +373,28 @@ class ApiClientTest extends TestCase {
                 new Response(200, [], (string) json_encode([
                     '@odata.context' => 'context-url',
                     '@odata.nextLink' => 'next-link',
-                    'value' => [['id' => 'first-id', 'displayName' => 'Name 1', 'mail' => 'mail1@nav.no', 'accountEnabled' => false]],
+                    'value' => [
+                        [
+                            'id'             => 'first-id',
+                            'displayName'    => 'Name 1',
+                            'mail'           => 'mail1@nav.no',
+                            'accountEnabled' => false,
+                        ],
+                    ],
                 ])),
                 new Response(200, [], (string) json_encode([
                     '@odata.context' => 'context-url',
                     'value' => [
-                        ['id' => 'second-id', 'displayName' => 'Name 2', 'mail' => 'mail2@nav.no', 'accountEnabled' => true],
-                        ['id' => 'third-id', 'displayName' => 'Name 3'], // incomplete, will trigger error internally
+                        [
+                            'id'             => 'second-id',
+                            'displayName'    => 'Name 2',
+                            'mail'           => 'mail2@nav.no',
+                            'accountEnabled' => true,
+                        ],
+                        [
+                            'id'          => 'third-id',
+                            'displayName' => 'Name 3',
+                        ],
                     ],
                 ])),
             ],
@@ -370,7 +402,7 @@ class ApiClientTest extends TestCase {
         );
 
         $members = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getGroupMembers('group-id');
-        $this->assertCount(2, $members);
+        $this->assertCount(3, $members);
         $this->assertCount(2, $clientHistory);
         $this->assertSame('groups/group-id/members', $clientHistory[0]['request']->getUri()->getPath());
         $this->assertSame('%24select=id%2CdisplayName%2Cmail%2CaccountEnabled&%24top=100', $clientHistory[0]['request']->getUri()->getQuery());
@@ -388,21 +420,36 @@ class ApiClientTest extends TestCase {
                 new Response(200, [], (string) json_encode([
                     '@odata.context' => 'context-url',
                     '@odata.nextLink' => 'next-link',
-                    'value' => [['id' => 'first-id', 'displayName' => 'Name 1', 'mail' => 'mail1@nav.no', 'accountEnabled' => true]],
+                    'value' => [
+                        [
+                            'id'             => 'first-id',
+                            'displayName'    => 'Name 1',
+                            'mail'           => 'mail1@nav.no',
+                            'accountEnabled' => true,
+                        ],
+                    ],
                 ])),
                 new Response(200, [], (string) json_encode([
                     '@odata.context' => 'context-url',
                     'value' => [
-                        ['id' => 'second-id', 'displayName' => 'Name 2', 'mail' => 'mail2@nav.no', 'accountEnabled' => true],
-                        ['id' => 'third-id', 'displayName' => 'Name 3'], // incomplete, will trigger error internally
+                        [
+                            'id'             => 'second-id',
+                            'displayName'    => 'Name 2',
+                            'mail'           => 'mail2@nav.no',
+                            'accountEnabled' => true,
+                        ],
+                        [
+                            'id'          => 'third-id',
+                            'displayName' => 'Name 3',
+                        ],
                     ],
                 ])),
             ],
-            $clientHistory
+            $clientHistory,
         );
 
         $owners = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getGroupOwners('group-id');
-        $this->assertCount(2, $owners);
+        $this->assertCount(3, $owners);
         $this->assertCount(2, $clientHistory);
         $this->assertSame('groups/group-id/owners', $clientHistory[0]['request']->getUri()->getPath());
         $this->assertSame('%24select=id%2CdisplayName%2Cmail%2CaccountEnabled&%24top=100', $clientHistory[0]['request']->getUri()->getQuery());
@@ -422,7 +469,12 @@ class ApiClientTest extends TestCase {
         $aadUser = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getUserById('some-id');
 
         $this->assertCount(1, $clientHistory, 'Expected one request');
-        $this->assertInstanceOf(Models\User::class, $aadUser);
+        $this->assertSame([
+            'id'             => 'some-id',
+            'displayName'    => 'Bar, Foo',
+            'mail'           => 'foobar@nav.no',
+            'accountEnabled' => false,
+        ], $aadUser);
 
         $uri = $clientHistory[0]['request']->getUri();
 
@@ -454,14 +506,28 @@ class ApiClientTest extends TestCase {
                     '@odata.context' => 'context-url',
                     '@odata.nextLink' => 'next-link',
                     'value' => [
-                        ['id' => 'id1', 'displayName'  => 'name1', 'description'  => 'desc1', 'mailNickname' => 'mail1'],
+                        [
+                            'id'           => 'id1',
+                            'displayName'  => 'name1',
+                            'description'  => 'desc1',
+                            'mailNickname' => 'mail1',
+                        ],
                     ],
                 ])),
                 new Response(200, [], (string) json_encode([
                     '@odata.context' => 'context-url',
                     'value' => [
-                        ['id' => 'id2', 'displayName'  => 'name2', 'description'  => 'desc2', 'mailNickname' => 'mail2'],
-                        ['id' => 'id3', 'displayName'  => 'name3', 'description'  => 'desc3'], // incomplete, will trigger error internally
+                        [
+                            'id' => 'id2',
+                            'displayName'  => 'name2',
+                            'description'  => 'desc2',
+                            'mailNickname' => 'mail2',
+                        ],
+                        [
+                            'id'           => 'id3',
+                            'displayName'  => 'name3',
+                            'description'  => 'desc3',
+                        ],
                     ],
                 ])),
             ],
@@ -469,7 +535,7 @@ class ApiClientTest extends TestCase {
         );
 
         $groups = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient(), $httpClient))->getUserGroups('user-id');
-        $this->assertCount(2, $groups);
+        $this->assertCount(3, $groups);
         $this->assertCount(2, $clientHistory);
         $this->assertSame('users/user-id/memberOf/microsoft.graph.group?%24select=id%2CdisplayName%2Cdescription%2CmailNickname&%24top=100', (string) $clientHistory[0]['request']->getUri());
         $this->assertSame('next-link', (string) $clientHistory[1]['request']->getUri());
@@ -561,5 +627,27 @@ class ApiClientTest extends TestCase {
         $this->assertSame('groups/group-id/members/id-1/$ref', (string) $clientHistory[1]['request']->getUri());
         $this->assertSame('groups/group-id/members/id-2/$ref', (string) $clientHistory[2]['request']->getUri());
         $this->assertSame('groups/group-id/members/id-3/$ref', (string) $clientHistory[3]['request']->getUri());
+    }
+
+    /**
+     * @covers ::getUserFields
+     * @covers ::setUserFields
+     */
+    public function testCanSetAndGetUserFields() : void {
+        $client = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient()));
+        $this->assertSame(['id', 'displayName', 'mail', 'accountEnabled'], $client->getUserFields());
+        $client->setUserFields(['foo', 'bar']);
+        $this->assertSame(['foo', 'bar'], $client->getUserFields());
+    }
+
+    /**
+     * @covers ::getGroupFields
+     * @covers ::setGroupFields
+     */
+    public function testCanSetAndGetGroupFields() : void {
+        $client = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient()));
+        $this->assertSame(['id', 'displayName', 'description', 'mailNickname'], $client->getGroupFields());
+        $client->setGroupFields(['foo', 'bar']);
+        $this->assertSame(['foo', 'bar'], $client->getGroupFields());
     }
 }

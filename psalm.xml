@@ -19,12 +19,6 @@
                 <file name="tests/ApiClientTest.php"/>
             </errorLevel>
         </ReferenceConstraintViolation>
-        <MoreSpecificImplementedParamType>
-            <errorLevel type="suppress">
-                <file name="src/Models/User.php"/>
-                <file name="src/Models/Group.php"/>
-            </errorLevel>
-        </MoreSpecificImplementedParamType>
     </issueHandlers>
     <plugins>
         <pluginClass class="Psalm\PhpUnitPlugin\Plugin"/>
