@@ -19,6 +19,11 @@
                 <file name="tests/ApiClientTest.php"/>
             </errorLevel>
         </ReferenceConstraintViolation>
+        <RedundantCastGivenDocblockType>
+            <errorLevel type="suppress">
+                <file name="src/ApiClient.php"/>
+            </errorLevel>
+        </RedundantCastGivenDocblockType>
     </issueHandlers>
     <plugins>
         <pluginClass class="Psalm\PhpUnitPlugin\Plugin"/>
