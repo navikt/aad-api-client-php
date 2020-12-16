@@ -14,7 +14,7 @@
         "source": "https://github.com/navikt/aad-api-client-php"
     },
     "require": {
-        "php": "^7.4",
+        "php": "^7.4 || ^8.0",
         "guzzlehttp/guzzle": "^7.2"
     },
     "require-dev": {
