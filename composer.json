@@ -42,6 +42,7 @@
         "test:coverage": "vendor/bin/phpunit --coverage-html build/coverage",
         "phpstan": "vendor/bin/phpstan analyse ",
         "psalm": "vendor/bin/psalm",
+        "phpcs": "php-cs-fixer fix --dry-run --diff --diff-format udiff",
         "sa": [
             "@phpstan",
             "@psalm"
@@ -50,7 +51,8 @@
             "composer validate --strict",
             "@lint",
             "@test",
-            "@sa"
+            "@sa",
+            "@phpcs"
         ]
     },
     "config": {

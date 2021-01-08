@@ -1,28 +1,28 @@
 <?php declare(strict_types=1);
 namespace NAVIT\AzureAd;
 
+use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Handler\MockHandler;
+use GuzzleHttp\HandlerStack;
+use GuzzleHttp\Middleware;
+use GuzzleHttp\Psr7\Request;
+use GuzzleHttp\Psr7\Response;
 use PHPUnit\Framework\TestCase;
-use GuzzleHttp\{
-    Client as HttpClient,
-    Handler\MockHandler,
-    HandlerStack,
-    Psr7\Response,
-    Psr7\Request,
-    Middleware,
-};
 use RuntimeException;
 
 /**
  * @coversDefaultClass NAVIT\AzureAd\ApiClient
  */
-class ApiClientTest extends TestCase {
+class ApiClientTest extends TestCase
+{
     /**
      * @param array<int,Response> $responses
      * @param array<int,array{response:Response,request:Request}> $history
      * @param-out array<int,array{response:Response,request:Request}> $history
      * @return HttpClient
      */
-    private function getMockClient(array $responses, array &$history = []) : HttpClient {
+    private function getMockClient(array $responses, array &$history = []): HttpClient
+    {
         $handler = HandlerStack::create(new MockHandler($responses));
         $handler->push(Middleware::history($history));
 
@@ -33,7 +33,8 @@ class ApiClientTest extends TestCase {
      * @param array<int,array{response:Response,request:Request}> $history $history
      * @return HttpClient
      */
-    private function getMockedAuthClient(array &$history = []) : HttpClient {
+    private function getMockedAuthClient(array &$history = []): HttpClient
+    {
         return $this->getMockClient(
             [new Response(200, [], '{"access_token": "some secret token"}')],
             $history
@@ -43,7 +44,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::__construct
      */
-    public function testCanConstructClient() : void {
+    public function testCanConstructClient(): void
+    {
         $clientHistory = [];
         $authClient = $this->getMockedAuthClient($clientHistory);
 
@@ -61,7 +63,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::getGroupById
      */
-    public function testCanGetGroupById() : void {
+    public function testCanGetGroupById(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [new Response(200, [], '{"id": "some-id", "displayName": "some-display-name", "description": "some description", "mailNickname": "mail"}')],
@@ -83,7 +86,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::getGroupById
      */
-    public function testReturnsNullWhenGroupByIdRequestFails() : void {
+    public function testReturnsNullWhenGroupByIdRequestFails(): void
+    {
         $this->assertNull(
             (new ApiClient(
                 'id',
@@ -98,7 +102,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::getGroupByDisplayName
      */
-    public function testCanGetGroupByDisplayName() : void {
+    public function testCanGetGroupByDisplayName(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [new Response(200, [], '{"value": [{"id": "some-id", "displayName": "some-display-name", "description": "some description", "mailNickname": "mail"}]}')],
@@ -120,7 +125,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::getGroupByDisplayName
      */
-    public function testReturnsNullWhenGroupByNameRequestFails() : void {
+    public function testReturnsNullWhenGroupByNameRequestFails(): void
+    {
         $httpClient = $this->getMockClient(
             [new Response(404)]
         );
@@ -131,7 +137,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::getGroupByDisplayName
      */
-    public function testReturnsNullWhenGroupDoesNotExist() : void {
+    public function testReturnsNullWhenGroupDoesNotExist(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [new Response(200, [], '{"value": []}')],
@@ -146,7 +153,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::getGroupByMailNickname
      */
-    public function testCanGetGroupByMailNickname() : void {
+    public function testCanGetGroupByMailNickname(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [new Response(200, [], '{"value": [{"id": "some-id", "displayName": "some-display-name", "description": "some description", "mailNickname": "mail"}]}')],
@@ -168,7 +176,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::getGroupByMailNickname
      */
-    public function testReturnsNullWhenGroupByMailNicknameRequestFails() : void {
+    public function testReturnsNullWhenGroupByMailNicknameRequestFails(): void
+    {
         $this->assertNull(
             (new ApiClient(
                 'id',
@@ -183,7 +192,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::getGroupByMailNickname
      */
-    public function testReturnsNullWhenGroupWithNailNicknameDoesNotExist() : void {
+    public function testReturnsNullWhenGroupWithNailNicknameDoesNotExist(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [new Response(200, [], '{"value": []}')],
@@ -198,7 +208,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::createGroup
      */
-    public function testCanCreateGroup() : void {
+    public function testCanCreateGroup(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [new Response(201, [], '{"id": "some-id", "displayName": "some-display-name", "description": "some description", "mailNickname": "mail"}')],
@@ -241,7 +252,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::createGroup
      */
-    public function testThrowsExceptionWhenFailingToCreateGroup() : void {
+    public function testThrowsExceptionWhenFailingToCreateGroup(): void
+    {
         $httpClient = $this->getMockClient([new Response(400)]);
 
         $this->expectExceptionObject(new RuntimeException('Unable to create group', 400));
@@ -255,7 +267,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::addGroupToEnterpriseApp
      */
-    public function testCanAddGroupToEnterpriseApp() : void {
+    public function testCanAddGroupToEnterpriseApp(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [new Response()],
@@ -271,14 +284,15 @@ class ApiClientTest extends TestCase {
         $this->assertSame([
             'principalId' => 'group-id',
             'appRoleId' => 'app-role-id',
-            'resourceId' => 'app-object-id'
+            'resourceId' => 'app-object-id',
         ], json_decode($request->getBody()->getContents(), true), 'Incorrect request body');
     }
 
     /**
      * @covers ::addGroupToEnterpriseApp
      */
-    public function testThrowsExceptionWhenFailingToAddGroupToEnterpriseApplication() : void {
+    public function testThrowsExceptionWhenFailingToAddGroupToEnterpriseApplication(): void
+    {
         $this->expectExceptionObject(new RuntimeException('Unable to add group to enterprise application', 400));
         (new ApiClient(
             'id',
@@ -293,7 +307,8 @@ class ApiClientTest extends TestCase {
      * @covers ::getEnterpriseAppGroups
      * @covers ::getPaginatedData
      */
-    public function testCanGetEnterpriseAppGroups() : void {
+    public function testCanGetEnterpriseAppGroups(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [
@@ -315,7 +330,7 @@ class ApiClientTest extends TestCase {
                     'id'           => 'first-id',
                     'displayName'  => 'first-group',
                     'description'  => 'first description',
-                    'mailNickname' => 'first'
+                    'mailNickname' => 'first',
                 ])),
                 new Response(200, [], (string) json_encode([
                     'id'           => 'second-id',
@@ -340,7 +355,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::setGroupDescription
      */
-    public function testCanSetGroupDescription() : void {
+    public function testCanSetGroupDescription(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient([new Response(200)], $clientHistory);
 
@@ -353,7 +369,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::setGroupDescription
      */
-    public function testSettingGroupDescriptionReturnsFalseOnFailure() : void {
+    public function testSettingGroupDescriptionReturnsFalseOnFailure(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient([new Response(404)], $clientHistory);
 
@@ -366,7 +383,8 @@ class ApiClientTest extends TestCase {
      * @covers ::getGroupMembers
      * @covers ::getPaginatedData
      */
-    public function testCanGetGroupMembers() : void {
+    public function testCanGetGroupMembers(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [
@@ -413,7 +431,8 @@ class ApiClientTest extends TestCase {
      * @covers ::getGroupOwners
      * @covers ::getPaginatedData
      */
-    public function testCanGetGroupOwners() : void {
+    public function testCanGetGroupOwners(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [
@@ -459,7 +478,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::getUserById
      */
-    public function testCanGetUserById() : void {
+    public function testCanGetUserById(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [new Response(200, [], '{"id": "some-id", "displayName": "Bar, Foo", "mail": "foobar@nav.no", "accountEnabled": false}')],
@@ -480,13 +500,13 @@ class ApiClientTest extends TestCase {
 
         $this->assertSame('users/some-id', $uri->getPath());
         $this->assertSame('%24select=id%2CdisplayName%2Cmail%2CaccountEnabled', $uri->getQuery());
-
     }
 
     /**
      * @covers ::getUserById
      */
-    public function testReturnsNullWhenUserByIdRequestFails() : void {
+    public function testReturnsNullWhenUserByIdRequestFails(): void
+    {
         $httpClient = $this->getMockClient(
             [new Response(404)]
         );
@@ -498,7 +518,8 @@ class ApiClientTest extends TestCase {
      * @covers ::getUserGroups
      * @covers ::getPaginatedData
      */
-    public function testCanGetUserGroups() : void {
+    public function testCanGetUserGroups(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient(
             [
@@ -544,7 +565,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::getPaginatedData
      */
-    public function testThrowsExceptionWhenUnableToFetchPaginatedData() : void {
+    public function testThrowsExceptionWhenUnableToFetchPaginatedData(): void
+    {
         $this->expectExceptionObject(new RuntimeException('Unable to fetch paginated data', 401));
         (new ApiClient(
             'id',
@@ -558,7 +580,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::addUserToGroup
      */
-    public function testCanAddUserToGroup() : void {
+    public function testCanAddUserToGroup(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient([new Response(204)], $clientHistory);
 
@@ -572,7 +595,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::addUserToGroup
      */
-    public function testThrowsExceptionWhenAddingExistingUserToGroup() : void {
+    public function testThrowsExceptionWhenAddingExistingUserToGroup(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient([new Response(400)], $clientHistory);
 
@@ -583,7 +607,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::removeUserFromGroup
      */
-    public function testCanRemoveUserFromGroup() : void {
+    public function testCanRemoveUserFromGroup(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient([new Response(204)], $clientHistory);
 
@@ -595,7 +620,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::removeUserFromGroup
      */
-    public function testThrowsExceptionWhenRemovingNonExistingMemberFromGroup() : void {
+    public function testThrowsExceptionWhenRemovingNonExistingMemberFromGroup(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient([new Response(400)], $clientHistory);
 
@@ -606,7 +632,8 @@ class ApiClientTest extends TestCase {
     /**
      * @covers ::emptyGroup
      */
-    public function testCanEmptyGroup() : void {
+    public function testCanEmptyGroup(): void
+    {
         $clientHistory = [];
         $httpClient = $this->getMockClient([
             new Response(200, [], (string) json_encode([
@@ -633,7 +660,8 @@ class ApiClientTest extends TestCase {
      * @covers ::getUserFields
      * @covers ::setUserFields
      */
-    public function testCanSetAndGetUserFields() : void {
+    public function testCanSetAndGetUserFields(): void
+    {
         $client = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient()));
         $this->assertSame(['id', 'displayName', 'mail', 'accountEnabled', 'givenName', 'surname'], $client->getUserFields());
         $client->setUserFields(['foo', 'bar']);
@@ -644,7 +672,8 @@ class ApiClientTest extends TestCase {
      * @covers ::getGroupFields
      * @covers ::setGroupFields
      */
-    public function testCanSetAndGetGroupFields() : void {
+    public function testCanSetAndGetGroupFields(): void
+    {
         $client = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient()));
         $this->assertSame(['id', 'displayName', 'description', 'mailNickname'], $client->getGroupFields());
         $client->setGroupFields(['foo', 'bar']);
