@@ -405,7 +405,7 @@ class ApiClientTest extends TestCase {
         $this->assertCount(3, $members);
         $this->assertCount(2, $clientHistory);
         $this->assertSame('groups/group-id/members', $clientHistory[0]['request']->getUri()->getPath());
-        $this->assertSame('%24select=id%2CdisplayName%2Cmail%2CaccountEnabled&%24top=100', $clientHistory[0]['request']->getUri()->getQuery());
+        $this->assertSame('%24select=id%2CdisplayName%2Cmail%2CaccountEnabled%2CgivenName%2Csurname&%24top=100', $clientHistory[0]['request']->getUri()->getQuery());
         $this->assertSame('next-link', (string) $clientHistory[1]['request']->getUri());
     }
 
@@ -452,7 +452,7 @@ class ApiClientTest extends TestCase {
         $this->assertCount(3, $owners);
         $this->assertCount(2, $clientHistory);
         $this->assertSame('groups/group-id/owners', $clientHistory[0]['request']->getUri()->getPath());
-        $this->assertSame('%24select=id%2CdisplayName%2Cmail%2CaccountEnabled&%24top=100', $clientHistory[0]['request']->getUri()->getQuery());
+        $this->assertSame('%24select=id%2CdisplayName%2Cmail%2CaccountEnabled%2CgivenName%2Csurname&%24top=100', $clientHistory[0]['request']->getUri()->getQuery());
         $this->assertSame('next-link', (string) $clientHistory[1]['request']->getUri());
     }
 
@@ -635,7 +635,7 @@ class ApiClientTest extends TestCase {
      */
     public function testCanSetAndGetUserFields() : void {
         $client = (new ApiClient('id', 'secret', 'nav.no', $this->getMockedAuthClient()));
-        $this->assertSame(['id', 'displayName', 'mail', 'accountEnabled'], $client->getUserFields());
+        $this->assertSame(['id', 'displayName', 'mail', 'accountEnabled', 'givenName', 'surname'], $client->getUserFields());
         $client->setUserFields(['foo', 'bar']);
         $this->assertSame(['foo', 'bar'], $client->getUserFields());
     }

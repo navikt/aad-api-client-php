@@ -22,6 +22,8 @@ class ApiClient {
         'displayName',
         'mail',
         'accountEnabled',
+        'givenName',
+        'surname',
     ];
 
     /**
