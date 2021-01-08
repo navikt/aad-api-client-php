@@ -2,3 +2,5 @@ build
 vendor
 .phpunit.result.cache
 test.php
+.vscode
+.php_cs.cache
