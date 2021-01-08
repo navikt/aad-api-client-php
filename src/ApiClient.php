@@ -1,14 +1,12 @@
 <?php declare(strict_types=1);
 namespace NAVIT\AzureAd;
 
-use GuzzleHttp\{
-    Client as HttpClient,
-    Exception\BadResponseException,
-};
-use InvalidArgumentException;
+use GuzzleHttp\Client as HttpClient;
+use GuzzleHttp\Exception\BadResponseException;
 use RuntimeException;
 
-class ApiClient {
+class ApiClient
+{
     private HttpClient $httpClient;
     private string $baseUri = 'https://graph.microsoft.com/beta/';
 
@@ -47,7 +45,8 @@ class ApiClient {
      * @param HttpClient $authClient Pre-configured HTTP client for auth
      * @param HttpClient $httpClient Pre-configured HTTP client for the API calls
      */
-    public function __construct(string $clientId, string $clientSecret, string $tenant, HttpClient $authClient = null, HttpClient $httpClient = null) {
+    public function __construct(string $clientId, string $clientSecret, string $tenant, HttpClient $authClient = null, HttpClient $httpClient = null)
+    {
         $response = ($authClient ?: new HttpClient())->post(sprintf('https://login.microsoftonline.com/%s/oauth2/v2.0/token', $tenant), [
             'form_params' => [
                 'client_id'     => $clientId,
@@ -74,7 +73,8 @@ class ApiClient {
      *
      * @return string[]
      */
-    public function getUserFields() : array {
+    public function getUserFields(): array
+    {
         return $this->userFields;
     }
 
@@ -84,7 +84,8 @@ class ApiClient {
      * @param string[] $fields
      * @return self
      */
-    public function setUserFields(array $fields) : self {
+    public function setUserFields(array $fields): self
+    {
         $this->userFields = $fields;
         return $this;
     }
@@ -94,7 +95,8 @@ class ApiClient {
      *
      * @return string[]
      */
-    public function getGroupFields() : array {
+    public function getGroupFields(): array
+    {
         return $this->groupFields;
     }
 
@@ -103,7 +105,8 @@ class ApiClient {
      *
      * @param string[] $fields
      */
-    public function setGroupFields(array $fields) : self {
+    public function setGroupFields(array $fields): self
+    {
         $this->groupFields = $fields;
         return $this;
     }
@@ -114,7 +117,8 @@ class ApiClient {
      * @param string $groupId
      * @return ?array<string,mixed>
      */
-    public function getGroupById(string $groupId) : ?array {
+    public function getGroupById(string $groupId): ?array
+    {
         try {
             /** @var array<string,mixed> */
             return json_decode($this->httpClient->get(sprintf('groups/%s', $groupId))->getBody()->getContents(), true);
@@ -129,7 +133,8 @@ class ApiClient {
      * @param string $displayName
      * @return ?array<string,mixed>
      */
-    public function getGroupByDisplayName(string $displayName) : ?array {
+    public function getGroupByDisplayName(string $displayName): ?array
+    {
         try {
             $response = $this->httpClient->get('groups', [
                 'query' => [
@@ -154,7 +159,8 @@ class ApiClient {
      * @param string $mailNickname
      * @return ?array<string,mixed>
      */
-    public function getGroupByMailNickname(string $mailNickname) : ?array {
+    public function getGroupByMailNickname(string $mailNickname): ?array
+    {
         try {
             $response = $this->httpClient->get('groups', [
                 'query' => [
@@ -183,8 +189,9 @@ class ApiClient {
      * @throws RuntimeException
      * @return array<string,mixed>
      */
-    public function createGroup(string $displayName, string $description, array $owners = [], array $members = []) : array {
-        $prefixer = function(string $user) : string {
+    public function createGroup(string $displayName, string $description, array $owners = [], array $members = []): array
+    {
+        $prefixer = function (string $user): string {
             return sprintf('%s/users/%s', rtrim($this->baseUri, '/'), $user);
         };
 
@@ -215,7 +222,8 @@ class ApiClient {
      * @param string $description The new description
      * @return bool Returns true on success or false otherwise
      */
-    public function setGroupDescription(string $groupId, string $description) : bool {
+    public function setGroupDescription(string $groupId, string $description): bool
+    {
         try {
             $this->httpClient->patch(sprintf('groups/%s', $groupId), [
                 'json' => [
@@ -238,7 +246,8 @@ class ApiClient {
      * @throws RuntimeException
      * @return void
      */
-    public function addGroupToEnterpriseApp(string $groupId, string $applicationObjectId, string $applicationRoleId) : void {
+    public function addGroupToEnterpriseApp(string $groupId, string $applicationObjectId, string $applicationRoleId): void
+    {
         try {
             $this->httpClient->post(sprintf('servicePrincipals/%s/appRoleAssignments', $applicationObjectId), [
                 'json' => [
@@ -247,7 +256,7 @@ class ApiClient {
                     'resourceId'  => $applicationObjectId,
                 ],
             ]);
-        } catch(BadResponseException $e) {
+        } catch (BadResponseException $e) {
             throw new RuntimeException('Unable to add group to enterprise application', (int) $e->getCode(), $e);
         }
     }
@@ -258,12 +267,13 @@ class ApiClient {
      * @param string $applicationObjectId The object ID of the application
      * @return array<int,array<string,mixed>>
      */
-    public function getEnterpriseAppGroups(string $applicationObjectId) : array {
+    public function getEnterpriseAppGroups(string $applicationObjectId): array
+    {
         $url = sprintf('servicePrincipals/%s/appRoleAssignedTo', $applicationObjectId);
 
-        return array_filter(array_map(function(array $group) : ?array {
+        return array_filter(array_map(function (array $group): ?array {
             return $this->getGroupById((string) $group['principalId']);
-        }, array_filter($this->getPaginatedData($url, ['principalId', 'principalType']), function(array $group) : bool {
+        }, array_filter($this->getPaginatedData($url, ['principalId', 'principalType']), function (array $group): bool {
             return 'group' === strtolower((string) $group['principalType']);
         })));
     }
@@ -274,7 +284,8 @@ class ApiClient {
      * @param string $groupId The group ID
      * @return array<int,array<string,mixed>>
      */
-    public function getGroupMembers(string $groupId) : array {
+    public function getGroupMembers(string $groupId): array
+    {
         return $this->getPaginatedData(sprintf('groups/%s/members', $groupId), $this->userFields);
     }
 
@@ -284,7 +295,8 @@ class ApiClient {
      * @param string $userId ID of the user
      * @return array<int,array<string,mixed>>
      */
-    public function getUserGroups(string $userId) : array {
+    public function getUserGroups(string $userId): array
+    {
         return $this->getPaginatedData(sprintf('users/%s/memberOf/microsoft.graph.group', $userId), $this->groupFields);
     }
 
@@ -294,7 +306,8 @@ class ApiClient {
      * @param string $groupId The group ID
      * @return array<int,array<string,mixed>>
      */
-    public function getGroupOwners(string $groupId) : array {
+    public function getGroupOwners(string $groupId): array
+    {
         return $this->getPaginatedData(sprintf('groups/%s/owners', $groupId), $this->userFields);
     }
 
@@ -304,13 +317,14 @@ class ApiClient {
      * @param string $userId
      * @return ?array<string,mixed>
      */
-    public function getUserById(string $userId) : ?array {
+    public function getUserById(string $userId): ?array
+    {
         try {
             /** @var array<string,mixed> */
             return json_decode($this->httpClient->get(sprintf('users/%s', $userId), ['query' => [
                 '$select' => join(',', [
-                    'id', 'displayName', 'mail', 'accountEnabled'
-                ])
+                    'id', 'displayName', 'mail', 'accountEnabled',
+                ]),
             ]])->getBody()->getContents(), true);
         } catch (BadResponseException $e) {
             return null;
@@ -324,12 +338,13 @@ class ApiClient {
      * @param string $groupId
      * @return void
      */
-    public function addUserToGroup(string $userId, string $groupId) : void {
+    public function addUserToGroup(string $userId, string $groupId): void
+    {
         try {
             $this->httpClient->post(sprintf('groups/%s/members/$ref', $groupId), ['json' => [
                 '@odata.id' => sprintf('%s/users/%s', rtrim($this->baseUri, '/'), $userId),
             ]]);
-        } catch(BadResponseException $e) {
+        } catch (BadResponseException $e) {
             throw new RuntimeException('Unable to add user to group', (int) $e->getCode(), $e);
         }
     }
@@ -341,10 +356,11 @@ class ApiClient {
      * @param string $groupId
      * @return void
      */
-    public function removeUserFromGroup(string $userId, string $groupId) : void {
+    public function removeUserFromGroup(string $userId, string $groupId): void
+    {
         try {
             $this->httpClient->delete(sprintf('groups/%s/members/%s/$ref', $groupId, $userId));
-        } catch(BadResponseException $e) {
+        } catch (BadResponseException $e) {
             throw new RuntimeException('Unable to remove user from group', (int) $e->getCode(), $e);
         }
     }
@@ -355,7 +371,8 @@ class ApiClient {
      * @param string $groupId
      * @return void
      */
-    public function emptyGroup(string $groupId) : void {
+    public function emptyGroup(string $groupId): void
+    {
         /** @var array<int,array{id:string}> */
         $members = $this->getPaginatedData(sprintf('groups/%s/members', $groupId), ['id']);
 
@@ -372,12 +389,13 @@ class ApiClient {
      * @throws RuntimeException
      * @return array<int,array<string,mixed>>
      */
-    private function getPaginatedData(string $url, array $fields = []) : array {
+    private function getPaginatedData(string $url, array $fields = []): array
+    {
         $entries = [];
 
         $query = array_filter([
             '$select' => join(',', array_map('trim', $fields)),
-            '$top'    => 100
+            '$top'    => 100,
         ]);
 
         while (null !== $url) {
