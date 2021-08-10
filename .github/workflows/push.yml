@@ -55,6 +55,6 @@ jobs:
         run: composer run sa
 
       - name: Check coding standard
-        run: php-cs-fixer fix --dry-run --diff --diff-format udiff
+        run: php-cs-fixer fix --dry-run --diff
         env:
           PHP_CS_FIXER_IGNORE_ENV: 1
