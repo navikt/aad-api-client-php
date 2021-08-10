@@ -191,9 +191,7 @@ class ApiClient
      */
     public function createGroup(string $displayName, string $description, array $owners = [], array $members = []): array
     {
-        $prefixer = function (string $user): string {
-            return sprintf('%s/users/%s', rtrim($this->baseUri, '/'), $user);
-        };
+        $prefixer = fn (string $user): string => sprintf('%s/users/%s', rtrim($this->baseUri, '/'), $user);
 
         try {
             /** @var array<string,mixed> */
@@ -271,11 +269,15 @@ class ApiClient
     {
         $url = sprintf('servicePrincipals/%s/appRoleAssignedTo', $applicationObjectId);
 
-        return array_filter(array_map(function (array $group): ?array {
-            return $this->getGroupById((string) $group['principalId']);
-        }, array_filter($this->getPaginatedData($url, ['principalId', 'principalType']), function (array $group): bool {
-            return 'group' === strtolower((string) $group['principalType']);
-        })));
+        return array_filter(
+            array_map(
+                fn (array $group): ?array => $this->getGroupById((string) $group['principalId']),
+                array_filter(
+                    $this->getPaginatedData($url, ['principalId', 'principalType']),
+                    fn (array $group): bool => 'group' === strtolower((string) $group['principalType'])
+                )
+            )
+        );
     }
 
     /**
