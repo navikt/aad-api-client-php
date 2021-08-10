@@ -4,3 +4,4 @@ vendor
 test.php
 .vscode
 .php_cs.cache
+.php-cs-fixer.cache

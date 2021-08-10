@@ -18,7 +18,7 @@
         "guzzlehttp/guzzle": "^7.2"
     },
     "require-dev": {
-        "navikt/coding-standard": "dev-main",
+        "navikt/coding-standard": "^2.0",
         "phpunit/phpunit": "^9.4",
         "psalm/plugin-phpunit": "^0.15.0",
         "vimeo/psalm": "^4.0"
@@ -38,7 +38,7 @@
         "test": "vendor/bin/phpunit",
         "test:coverage": "vendor/bin/phpunit --coverage-html build/coverage",
         "psalm": "vendor/bin/psalm",
-        "phpcs": "php-cs-fixer fix --dry-run --diff --diff-format udiff",
+        "phpcs": "php-cs-fixer fix --dry-run --diff",
         "sa": "@psalm",
         "ci": [
             "composer validate --strict",
