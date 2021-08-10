@@ -20,7 +20,7 @@
     "require-dev": {
         "navikt/coding-standard": "^2.0",
         "phpunit/phpunit": "^9.4",
-        "psalm/plugin-phpunit": "^0.15.0",
+        "psalm/plugin-phpunit": "^0.16.1",
         "vimeo/psalm": "^4.0"
     },
     "autoload": {
